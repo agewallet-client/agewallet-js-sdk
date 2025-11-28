@@ -2,8 +2,14 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  // 1. Set the root to the HTML folder so paths are flat
+  root: 'tests/public',
+
   build: {
-    // This tells Vite these are the pages we want to build
+    // 2. Output back to the main project 'dist' folder
+    outDir: '../../dist',
+    emptyOutDir: true,
+
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'tests/public/index.html'),
@@ -13,19 +19,13 @@ export default defineConfig({
         liveOverlay: resolve(__dirname, 'tests/public/live-overlay.html'),
         liveApi: resolve(__dirname, 'tests/public/live-api.html'),
       },
-    },
-    minify: 'esbuild',
-    sourcemap: true,
-    outDir: 'dist',
-    emptyOutDir: true
-  },
-  server: {
-    fs: {
-      allow: ['..']
     }
   },
-  root: '.',
-  test: {
-    environment: 'happy-dom'
+
+  // 3. Allow Vite to import files from the parent 'src' directory
+  server: {
+    fs: {
+      allow: ['../..']
+    }
   }
 });

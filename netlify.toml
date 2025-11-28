@@ -1,11 +1,9 @@
 [build]
-  # Netlify will run this command to build the site
   command = "npm run build"
 
-  # Netlify will serve files from this directory
-  publish = "dist/tests/public"
+  # UPDATED: Publish the root dist folder
+  publish = "dist"
 
-  # Netlify locates functions here
   functions = "tests/functions"
 
 [dev]
