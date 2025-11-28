@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test: API Mode</title>
+    <style>body { font-family: sans-serif; padding: 2rem; background: #111; color: #fff; }</style>
+</head>
+<body>
+    <h1>🔒 Secure Video Page</h1>
+
+    <div id="secure-container" style="border: 1px dashed #444; padding: 20px; min-height: 300px;"></div>
+
+    <p style="margin-top: 20px;">
+        <button onclick="window.AgeWallet.logout()">Reset Verification</button>
+    </p>
+
+    <script type="module">
+        import AgeWallet from '../../src/index.js';
+
+        const aw = new AgeWallet({
+            clientId: 'test-client-id',
+            mode: 'api',
+            targetSelector: '#secure-container',
+            redirectUri: window.location.href.split('?')[0],
+            api: {
+                endpoint: '/.netlify/functions/mock-content' // The Secure Content API
+            },
+            ui: {
+                title: 'Premium Content',
+                description: 'Verify to unlock the video player.'
+            }
+        });
+
+        // --- MOCK OVERRIDES (Same as Overlay test) ---
+        aw.generateAuthUrl = async function() {
+            const state = this.security.generateRandomString(16);
+            this.storage.setOidcState(state, 'mock-verifier', 'mock-nonce', this.config.redirectUri);
+            return { url: `/.netlify/functions/mock-oidc?state=${state}&redirect_uri=${this.config.redirectUri}`, state };
+        };
+        aw.handleCallback = async function(code, state) {
+            const tokenData = await this.network.postForm('/.netlify/functions/mock-oidc', { code });
+            this.storage.setVerification(tokenData);
+        };
+        // ---------------------------------------------
+
+        aw.init();
+        window.AgeWallet = aw;
+    </script>
+</body>
+</html>

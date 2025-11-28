@@ -1,0 +1,14 @@
+[build]
+  # Netlify will run this command to build the site
+  command = "npm run build"
+
+  # Netlify will serve files from this directory
+  publish = "dist/tests/public"
+
+  # Netlify locates functions here
+  functions = "tests/functions"
+
+[dev]
+  command = "npm run dev"
+  targetPort = 5173
+  publish = "tests/public"
