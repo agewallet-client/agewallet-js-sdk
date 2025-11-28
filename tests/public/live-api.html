@@ -17,13 +17,13 @@
     <script type="module">
         import AgeWallet from '../../src/index.js';
 
-        // REAL CREDENTIALS
-        const REAL_CLIENT_ID = 'ccae3783-78cf-4e23-8148-ab571abfdb07';
-        const REAL_SECRET = 'f3c2c54f49fa01a6b5a60b8c3dd3dad62c580aa3c8bdc9342aa65485d747eb5a';
+        // CREDENTIALS FOR API CLIENT
+        const CLIENT_ID = '3801e03e-c8f8-4577-8717-74eed73c1a50';
+        const CLIENT_SECRET = '1e841b24e77c5dd7c0ddd7262400e6e5a13cf742d5b7ac6b154cba13e4f2578a';
 
         const aw = new AgeWallet({
-            clientId: REAL_CLIENT_ID,
-            clientSecret: REAL_SECRET,
+            clientId: CLIENT_ID,
+            clientSecret: CLIENT_SECRET,
             mode: 'api',
             targetSelector: '#app',
             redirectUri: window.location.href.split('?')[0],
