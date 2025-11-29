@@ -65,8 +65,10 @@ export const handler = async (event, context) => {
     // --- LOGOUT FLOW ---
     if (params.action === 'logout') {
         await aw.storage.clearVerification();
-        // Also clear cookies
-        commonHeaders['Set-Cookie'] = setCookieHeader + '; Max-Age=0';
+
+        // FIX: Explicitly expire the correct cookie by name
+        commonHeaders['Set-Cookie'] = `redis_session_id=${sessionId}; Max-Age=0; Path=/; SameSite=Lax`;
+
         return {
             statusCode: 302,
             headers: { Location: "/.netlify/functions/redis-demo" },
