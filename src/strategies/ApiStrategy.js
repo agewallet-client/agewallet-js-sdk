@@ -1,15 +1,16 @@
+// src/strategies/ApiStrategy.js
 /**
  * API Strategy (Strict/Secure Mode)
  * Checks verification. If verified, fetches secure content.
  * If unverified, shows Gate.
  */
-export default class ApiStrategy {
+export class ApiStrategy {
     constructor(core) {
         this.core = core;
     }
 
     async execute() {
-        const token = this.core.storage.getVerificationToken();
+        const token = await this.core.storage.getVerificationToken();
         const target = document.querySelector(this.core.config.targetSelector);
 
         // Safety check for Render Mode
@@ -47,14 +48,14 @@ export default class ApiStrategy {
 
             } catch (e) {
                 console.warn('[AgeWallet] Verification failed or expired.', e);
-                this.core.storage.clearVerification();
-                this._showGate(target);
+                await this.core.storage.clearVerification();
+                await this._showGate(target);
             }
             return;
         }
 
         // --- Scenario B: User is Unverified ---
-        this._showGate(target);
+        await this._showGate(target);
     }
 
     async _showGate(target) {

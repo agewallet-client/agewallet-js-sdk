@@ -1,11 +1,12 @@
+// src/modules/Renderer.js
 /**
  * AgeWallet Renderer Module
  * Handles DOM manipulation, CSS injection, Script Hydration, and Anti-Flicker.
  */
-export default class Renderer {
+export class Renderer {
 
     constructor() {
-        // Default CSS (Same as before)
+        // Default CSS
         this.defaultCss = `
             :root { --aw-bg: #000; --aw-card: #0d0d10; --aw-card-border: #1e1e24; --aw-text: #f5f7fb; --aw-muted: #c8cbd4; --aw-danger: #ff4d4f; --aw-purple: #6a1b9a; --aw-purple-700: #5a1784; --aw-shadow: 0 10px 30px rgba(0,0,0,.45); --aw-radius: 16px; }
             .aw-gate-wrapper { display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -43,11 +44,13 @@ export default class Renderer {
     }
 
     revealPage() {
+        if (typeof document === 'undefined') return;
         const hider = document.getElementById('aw-hider');
         if (hider) hider.remove();
     }
 
     injectCss() {
+        if (typeof document === 'undefined') return;
         if (document.getElementById('aw-default-css')) return;
         const style = document.createElement('style');
         style.id = 'aw-default-css';
@@ -55,47 +58,29 @@ export default class Renderer {
         document.head.appendChild(style);
     }
 
-    /**
-     * Removes any existing Gate/Spinner overlay.
-     */
     clearGate(target) {
-        // For Full Page, we look for the wrapper we appended
+        if (typeof document === 'undefined') return;
         if (target === document.body) {
             const existing = document.getElementById('aw-gate-overlay');
             if (existing) existing.remove();
             document.body.style.overflow = ''; // Unlock scroll
-        } else {
-            // For Elements, we wipe it (assuming API mode or container gating)
-            // BUT: If we are just removing a spinner to show content, API strategy handles hydration
-            // If this is Overlay Mode on an Element, we need to be careful.
-            // For now, element gating implies "Gate is on top", so removing it reveals content?
-            // No, usually we replace.
-            // Let's assume clearGate is mostly for the Full Page Overlay cleanup.
         }
     }
 
-    /**
-     * Internal render helper to handle Body vs Element logic
-     */
     _renderHtml(target, htmlContent) {
         this.injectCss();
         const isFullPage = (target === document.body);
 
         if (isFullPage) {
             document.body.style.overflow = 'hidden';
-            // Remove existing overlay if present to prevent stacking
             this.clearGate(target);
-
-            // Append to body (Do NOT wipe content)
             target.insertAdjacentHTML('beforeend', htmlContent);
         } else {
-            // Element Mode: Target IS the container, so we fill it.
             target.style.position = 'relative';
             target.style.minHeight = '300px';
             target.innerHTML = htmlContent;
         }
 
-        // The UI is ready, so we can reveal the page/element
         this.revealPage();
     }
 
@@ -153,13 +138,11 @@ export default class Renderer {
     injectContent(target, htmlContent) {
         if (target === document.body) {
             document.body.style.overflow = '';
-            // In API mode (Full Page), we DO want to replace body content
             target.innerHTML = htmlContent;
         } else {
             target.innerHTML = htmlContent;
         }
 
-        // Re-animate Scripts
         const scripts = target.querySelectorAll('script');
         Array.from(scripts).forEach((oldScript) => {
             const newScript = document.createElement('script');

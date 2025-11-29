@@ -1,10 +1,10 @@
 // src/AgeWallet.js
-import Security from './modules/Security.js';
-import Storage from './modules/Storage.js';
-import Network from './modules/Network.js';
-import Renderer from './modules/Renderer.js';
-import OverlayStrategy from './strategies/OverlayStrategy.js';
-import ApiStrategy from './strategies/ApiStrategy.js';
+import { Security } from './modules/Security.js';
+import { Storage } from './modules/Storage.js';
+import { Network } from './modules/Network.js';
+import { Renderer } from './modules/Renderer.js';
+import { OverlayStrategy } from './strategies/OverlayStrategy.js';
+import { ApiStrategy } from './strategies/ApiStrategy.js';
 
 export class AgeWallet {
 

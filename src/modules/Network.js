@@ -1,8 +1,9 @@
+// src/modules/Network.js
 /**
  * AgeWallet Network Module
  * Handles HTTP requests for OIDC Token Exchange and API Content Fetching.
  */
-export default class Network {
+export class Network {
 
     /**
      * POST request (Form URL Encoded) - Used for OIDC Token Endpoint

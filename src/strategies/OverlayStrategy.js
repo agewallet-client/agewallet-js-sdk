@@ -1,15 +1,17 @@
+// src/strategies/OverlayStrategy.js
 /**
  * Overlay Strategy (Standard Mode)
  * Checks verification. If unverified, renders the Gate UI.
  * If verified, does nothing (allowing content to be seen).
  */
-export default class OverlayStrategy {
+export class OverlayStrategy {
     constructor(core) {
         this.core = core; // Access to Security, Storage, Renderer, Config
     }
 
     async execute() {
-        const token = this.core.storage.getVerificationToken();
+        // Must await storage retrieval
+        const token = await this.core.storage.getVerificationToken();
 
         // 1. User is Verified
         if (token) {
