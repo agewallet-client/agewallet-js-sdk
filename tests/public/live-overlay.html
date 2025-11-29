@@ -8,7 +8,7 @@
 </head>
 <body>
     <h1>🟢 Live Production Test</h1>
-    <p>This page connects to the <strong>Real AgeWallet API</strong>.</p>
+    <p>This page connects to the <strong>Real AgeWallet API</strong> (via Proxy).</p>
 
     <div style="background: #eee; padding: 20px; margin: 20px 0; border-radius: 8px;">
         <h3>Restricted Content</h3>
@@ -28,7 +28,11 @@
             clientId: CLIENT_ID,
             clientSecret: CLIENT_SECRET,
             mode: 'overlay',
-            redirectUri: window.location.href.split('?')[0]
+            redirectUri: window.location.href.split('?')[0],
+            // CRITICAL: Point token exchange to local proxy to bypass CORS
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
+            }
         });
 
         aw.init();

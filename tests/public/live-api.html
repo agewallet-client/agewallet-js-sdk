@@ -27,8 +27,13 @@
             mode: 'api',
             targetSelector: '#app',
             redirectUri: window.location.href.split('?')[0],
+            // Hits your "Live Content" backend simulator
             api: {
                 endpoint: '/.netlify/functions/live-content'
+            },
+            // CRITICAL: Point token exchange to local proxy to bypass CORS
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
             }
         });
 

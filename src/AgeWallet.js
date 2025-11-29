@@ -8,27 +8,38 @@ import ApiStrategy from './strategies/ApiStrategy.js';
 export default class AgeWallet {
 
     constructor(config) {
+        // Define default endpoints
+        const defaultEndpoints = {
+            auth: 'https://app.agewallet.io/user/authorize',
+            token: 'https://app.agewallet.io/user/token',
+            userinfo: 'https://app.agewallet.io/user/userinfo'
+        };
+
         this.config = {
             clientId: '',
+            clientSecret: '',
             redirectUri: typeof window !== 'undefined' ? window.location.href.split('?')[0] : '',
-            mode: 'overlay', // 'overlay' | 'api'
-            render: true,    // true = SDK renders, false = Headless
+            mode: 'overlay',
+            render: true,
             targetSelector: 'body',
-            storage: 'cookie', // 'cookie' | 'local' | CustomClass
+            storage: 'cookie',
             ui: {},
-            api: {}, // { endpoint: '/...' }
-            ...config
+            api: {},
+            ...config,
+            // Ensure endpoints are merged correctly (defaults + user overrides)
+            endpoints: {
+                ...defaultEndpoints,
+                ...(config.endpoints || {})
+            }
         };
 
         if (!this.config.clientId) {
             throw new Error('[AgeWallet] Missing clientId.');
         }
 
-        // Initialize Modules
         this.security = new Security();
         this.network = new Network();
 
-        // Handle Storage Injection
         if (typeof this.config.storage === 'object') {
             this.storage = new Storage('custom', this.config.storage);
         } else {
@@ -38,21 +49,15 @@ export default class AgeWallet {
         this.renderer = new Renderer();
     }
 
-    /**
-     * Main Entry Point
-     */
     async init() {
-        // 1. Check for OIDC Callback (Authorization Code)
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             if (params.has('code') && params.has('state')) {
                 await this.handleCallback(params.get('code'), params.get('state'));
-                // Clean URL after handling
                 window.history.replaceState({}, document.title, this.config.redirectUri);
             }
         }
 
-        // 2. Execute Strategy
         if (this.config.mode === 'api') {
             const strategy = new ApiStrategy(this);
             await strategy.execute();
@@ -62,16 +67,12 @@ export default class AgeWallet {
         }
     }
 
-    /**
-     * Generates OIDC Params and URL
-     */
     async generateAuthUrl() {
         const state = this.security.generateRandomString(16);
         const nonce = this.security.generateRandomString(16);
         const verifier = this.security.generatePkceVerifier();
         const challenge = await this.security.generatePkceChallenge(verifier);
 
-        // Store session state
         this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
 
         const params = new URLSearchParams({
@@ -85,15 +86,13 @@ export default class AgeWallet {
             nonce: nonce
         });
 
+        // Use configured Auth endpoint
         return {
-            url: `https://app.agewallet.io/user/authorize?${params.toString()}`,
+            url: `${this.config.endpoints.auth}?${params.toString()}`,
             state: state
         };
     }
 
-    /**
-     * Handles the OIDC Callback (Exchange Code for Token)
-     */
     async handleCallback(code, state) {
         const stored = this.storage.getOidcState();
 
@@ -102,17 +101,25 @@ export default class AgeWallet {
             return;
         }
 
-        try {
-            const tokenData = await this.network.postForm('https://app.agewallet.io/user/token', {
-                grant_type: 'authorization_code',
-                client_id: this.config.clientId,
-                redirect_uri: stored.returnUrl || this.config.redirectUri,
-                code: code,
-                code_verifier: stored.verifier
-            });
+        const body = {
+            grant_type: 'authorization_code',
+            client_id: this.config.clientId,
+            redirect_uri: stored.returnUrl || this.config.redirectUri,
+            code: code,
+            code_verifier: stored.verifier
+        };
 
-            // Verify age requirement via UserInfo (Optional but recommended)
-            const userInfo = await this.network.get('https://app.agewallet.io/user/userinfo', tokenData.access_token);
+        // Attach Secret if provided (required for Confidential Clients)
+        if (this.config.clientSecret) {
+            body.client_secret = this.config.clientSecret;
+        }
+
+        try {
+            // Use configured Token endpoint (This allows the Proxy to intercept)
+            const tokenData = await this.network.postForm(this.config.endpoints.token, body);
+
+            // Use configured UserInfo endpoint
+            const userInfo = await this.network.get(this.config.endpoints.userinfo, tokenData.access_token);
 
             if (userInfo.age_verified !== true) {
                 throw new Error('Age requirement not met.');
@@ -125,7 +132,6 @@ export default class AgeWallet {
         }
     }
 
-    // Helper for manual logout
     logout() {
         this.storage.clearVerification();
         window.location.reload();
