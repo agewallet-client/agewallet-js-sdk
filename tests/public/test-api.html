@@ -2,50 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Test: API Mode</title>
-    <style>body { font-family: sans-serif; padding: 2rem; background: #111; color: #fff; }</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Test: API Mode</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; background: #111; color: white; }
+        a.back-link { display: inline-block; margin-bottom: 20px; color: #ccc; text-decoration: none; }
+        a.back-link:hover { text-decoration: underline; color: #fff; }
+    </style>
 </head>
 <body>
-    <h1>🔒 Secure Video Page</h1>
+    <a href="index.html" class="back-link">← Back to Index</a>
 
-    <div id="secure-container" style="border: 1px dashed #444; padding: 20px; min-height: 300px;"></div>
+    <h1>🔐 Live API Mode</h1>
+    <p>Fetching content from Netlify Function validated by AgeWallet.</p>
 
-    <p style="margin-top: 20px;">
-        <button onclick="window.AgeWallet.logout()">Reset Verification</button>
-    </p>
+    <div id="app"></div>
+
+    <p style="margin-top:2rem"><button onclick="AgeWallet.logout()">Logout</button></p>
 
     <script type="module">
         import { AgeWallet } from '../../src/index.js';
 
+        // CREDENTIALS FOR API CLIENT
+        const CLIENT_ID = '3801e03e-c8f8-4577-8717-74eed73c1a50';
+        const CLIENT_SECRET = '1e841b24e77c5dd7c0ddd7262400e6e5a13cf742d5b7ac6b154cba13e4f2578a';
+
         const aw = new AgeWallet({
-            clientId: 'test-client-id',
+            clientId: CLIENT_ID,
+            clientSecret: CLIENT_SECRET,
             mode: 'api',
-            targetSelector: '#secure-container',
+            targetSelector: '#app',
             redirectUri: window.location.href.split('?')[0],
+            // Hits your "Live Content" backend simulator
             api: {
-                endpoint: '/.netlify/functions/mock-content' // The Secure Content API
+                endpoint: '/.netlify/functions/live-content'
             },
-            ui: {
-                title: 'Premium Content',
-                description: 'Verify to unlock the video player.'
+            // CRITICAL: Point token exchange to local proxy to bypass CORS
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
             }
         });
-
-        // --- MOCK OVERRIDES (Same as Overlay test) ---
-        aw.generateAuthUrl = async function() {
-            const state = this.security.generateRandomString(16);
-            const nonce = this.security.generateRandomString(16);
-            const verifier = this.security.generatePkceVerifier();
-            const challenge = await this.security.generatePkceChallenge(verifier);
-
-            await this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
-            return { url: `/.netlify/functions/mock-oidc?state=${state}&redirect_uri=${this.config.redirectUri}`, state };
-        };
-        aw.handleCallback = async function(code, state) {
-            const tokenData = await this.network.postForm('/.netlify/functions/mock-oidc', { code });
-            await this.storage.setVerification(tokenData);
-        };
-        // ---------------------------------------------
 
         aw.init();
         window.AgeWallet = aw;

@@ -3,52 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgeWallet SDK Test Kitchen</title>
+    <title>AgeWallet SDK - Live Tests</title>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
         h1 { border-bottom: 2px solid #eee; padding-bottom: 1rem; }
-        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .card h3 { margin-top: 0; }
-        .tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; transition: transform 0.2s; background: #fff; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #ccc; }
+        .card h3 { margin-top: 0; color: #222; }
+        .tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #555; margin-right: 5px;}
         a { text-decoration: none; color: inherit; display: block; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <h1>👨‍🍳 AgeWallet SDK Test Kitchen</h1>
-    <p>Select a scenario to verify the SDK behavior.</p>
+    <h1>🚀 AgeWallet SDK Live Tests</h1>
+    <p>Production-ready scenarios connecting to the real AgeWallet API.</p>
 
-    <a href="test-overlay.html">
-        <div class="card">
-            <h3>Scenario A: Standard Overlay</h3>
-            <p>Simulates a standard marketing site. <span class="tag">mode: overlay</span> <span class="tag">render: true</span></p>
-            <ul>
-                <li>Expected: Scroll locked, full-screen gate.</li>
-                <li>Action: Redirects to Mock Auth -> Returns -> Gate removed.</li>
-            </ul>
-        </div>
-    </a>
+    <div class="grid">
+        <a href="live-overlay.html">
+            <div class="card">
+                <h3>🟢 Live Overlay</h3>
+                <p><span class="tag">Standard</span> <span class="tag">Cookies</span></p>
+                <p>Basic client-side gating. Page content loads but is hidden by UI.</p>
+            </div>
+        </a>
 
-    <a href="test-api.html">
-        <div class="card">
-            <h3>Scenario B: Secure API Fetch</h3>
-            <p>Simulates a premium video page. <span class="tag">mode: api</span> <span class="tag">render: true</span></p>
-            <ul>
-                <li>Expected: Empty container with spinner.</li>
-                <li>Action: Verify -> Fetch HTML from Mock API -> Inject & Hydrate.</li>
-            </ul>
-        </div>
-    </a>
+        <a href="live-api.html">
+            <div class="card">
+                <h3>🔐 Live API (Secure)</h3>
+                <p><span class="tag">High Security</span> <span class="tag">Fetch</span></p>
+                <p>Content is fetched securely from backend only after verification.</p>
+            </div>
+        </a>
 
-    <a href="test-headless.html">
-        <div class="card">
-            <h3>Scenario C: Headless (React/Modern)</h3>
-            <p>Simulates a SPA. <span class="tag">render: false</span></p>
-            <ul>
-                <li>Expected: No UI. Check Console logs.</li>
-                <li>Action: Manually trigger login -> Check console events.</li>
-            </ul>
-        </div>
-    </a>
+        <a href="live-redis.html">
+            <div class="card">
+                <h3>💾 Live Redis (SSR)</h3>
+                <p><span class="tag">Server-Side</span> <span class="tag">Node.js</span></p>
+                <p>Full-page protection using Redis sessions. Zero client-side state.</p>
+            </div>
+        </a>
+
+        <a href="live-local.html">
+            <div class="card">
+                <h3>💾 Local Storage</h3>
+                <p><span class="tag">SPA Friendly</span> <span class="tag">No Cookies</span></p>
+                <p>Uses <code>localStorage</code> instead of cookies for persistence.</p>
+            </div>
+        </a>
+
+        <a href="live-branding.html">
+            <div class="card">
+                <h3>🎨 Custom Branding</h3>
+                <p><span class="tag">UI Config</span> <span class="tag">CSS</span></p>
+                <p>Demonstrates custom logo, copy, and CSS overrides.</p>
+            </div>
+        </a>
+
+        <a href="live-headless.html">
+            <div class="card">
+                <h3>🧠 Headless Mode</h3>
+                <p><span class="tag">React/Vue</span> <span class="tag">No UI</span></p>
+                <p>SDK handles logic, App handles UI. Full control.</p>
+            </div>
+        </a>
+    </div>
 </body>
 </html>

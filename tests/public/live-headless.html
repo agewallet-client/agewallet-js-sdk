@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Test: Headless</title>
+    <style>
+        body { font-family: monospace; padding: 2rem; background: #f4f4f5; }
+        a.back-link { display: inline-block; margin-bottom: 20px; color: #666; text-decoration: none; }
+        .log-box { background: #fff; padding: 1rem; border-radius: 4px; min-height: 150px; border: 1px solid #ccc; margin-bottom: 1rem; }
+        .status { font-weight: bold; color: blue; }
+        #app-ui, #secure-content { margin-bottom: 1rem; padding: 1rem; background: white; border: 1px solid #ddd; display: none; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Index</a>
+
+    <h1>🧠 Live Test: Headless Mode</h1>
+    <p>Status: <span id="status" class="status">Initializing...</span></p>
+
+    <div id="app-ui">
+        <h3>Custom React/Vue App UI</h3>
+        <p>This UI is rendered by the "App", not the SDK.</p>
+        <button id="custom-verify-btn" style="background:blue; color:white; padding:10px 20px; border:none; cursor:pointer;">
+            Verify with AgeWallet
+        </button>
+    </div>
+
+    <div id="secure-content"></div>
+
+    <pre class="log-box" id="logs">logs:\n</pre>
+    <button onclick="window.AgeWallet.logout()">Reset</button>
+
+    <script type="module">
+        import { AgeWallet } from '../../src/index.js';
+
+        function log(msg) {
+            document.getElementById('logs').innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+        }
+
+        const aw = new AgeWallet({
+            clientId: '3801e03e-c8f8-4577-8717-74eed73c1a50', // API Client ID
+            clientSecret: '1e841b24e77c5dd7c0ddd7262400e6e5a13cf742d5b7ac6b154cba13e4f2578a',
+            mode: 'api',
+            render: false, // HEADLESS MODE
+            redirectUri: window.location.href.split('?')[0],
+            api: { endpoint: '/.netlify/functions/live-content' },
+            endpoints: { token: '/.netlify/functions/proxy-token' },
+
+            // Event Handlers
+            onUnverified: (authUrl) => {
+                log('Event: onUnverified received.');
+                document.getElementById('status').innerText = 'Unverified';
+                document.getElementById('app-ui').style.display = 'block';
+
+                const btn = document.getElementById('custom-verify-btn');
+                btn.onclick = () => {
+                    log('Redirecting to Auth URL...');
+                    window.location.href = authUrl;
+                };
+            },
+
+            onVerified: (content) => {
+                log('Event: onVerified received.');
+                document.getElementById('status').innerText = 'Verified';
+                document.getElementById('app-ui').style.display = 'none';
+
+                const container = document.getElementById('secure-content');
+                container.style.display = 'block';
+                // We manually parse the JSON response from our Live API
+                try {
+                    const json = JSON.parse(content);
+                    container.innerHTML = json.html;
+                    log('Content rendered successfully.');
+                } catch(e) {
+                    log('Error parsing content: ' + e.message);
+                }
+            }
+        });
+
+        aw.init();
+        window.AgeWallet = aw;
+    </script>
+</body>
+</html>

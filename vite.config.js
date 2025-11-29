@@ -19,6 +19,9 @@ export default defineConfig({
         liveOverlay: resolve(__dirname, 'tests/public/live-overlay.html'),
         liveApi: resolve(__dirname, 'tests/public/live-api.html'),
         liveRedis: resolve(__dirname, 'tests/public/live-redis.html'),
+        liveLocal: resolve(__dirname, 'tests/public/live-local.html'),
+        liveBranding: resolve(__dirname, 'tests/public/live-branding.html'),
+        liveHeadless: resolve(__dirname, 'tests/public/live-headless.html'),
       },
     }
   },
