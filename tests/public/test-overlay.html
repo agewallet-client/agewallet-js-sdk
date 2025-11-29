@@ -21,7 +21,7 @@
     </div>
 
     <script type="module">
-        import AgeWallet from '../../src/index.js'; // Importing direct source for dev testing
+        import { AgeWallet } from '../../src/index.js'; // Named Export Import
 
         const aw = new AgeWallet({
             clientId: 'test-client-id',
@@ -35,7 +35,10 @@
             const state = this.security.generateRandomString(16);
             const nonce = this.security.generateRandomString(16);
             const verifier = this.security.generatePkceVerifier();
-            this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
+            const challenge = await this.security.generatePkceChallenge(verifier);
+
+            // Wait for async storage
+            await this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
 
             return {
                 url: `/.netlify/functions/mock-oidc?response_type=code&state=${state}&redirect_uri=${this.config.redirectUri}`,
@@ -44,10 +47,9 @@
         };
 
         // Monkey-patch Token Exchange to use Mock Server
-        const originalHandleCallback = aw.handleCallback.bind(aw);
         aw.handleCallback = async function(code, state) {
             // We override the endpoint to hit our local mock function
-            const stored = this.storage.getOidcState();
+            const stored = await this.storage.getOidcState();
             if (!stored || stored.state !== state) return;
 
             const tokenData = await this.network.postForm('/.netlify/functions/mock-oidc', {
@@ -55,7 +57,7 @@
                 code: code
             });
 
-            this.storage.setVerification(tokenData);
+            await this.storage.setVerification(tokenData);
         };
 
         aw.init();

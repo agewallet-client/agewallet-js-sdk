@@ -24,7 +24,7 @@
     <button onclick="window.AgeWallet.logout()">Reset</button>
 
     <script type="module">
-        import AgeWallet from '../../src/index.js';
+        import { AgeWallet } from '../../src/index.js';
 
         function log(msg) {
             document.getElementById('logs').innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
@@ -67,12 +67,16 @@
         // --- MOCK OVERRIDES ---
         aw.generateAuthUrl = async function() {
             const state = this.security.generateRandomString(16);
-            this.storage.setOidcState(state, 'mock', 'mock', this.config.redirectUri);
+            const nonce = this.security.generateRandomString(16);
+            const verifier = this.security.generatePkceVerifier();
+            const challenge = await this.security.generatePkceChallenge(verifier);
+
+            await this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
             return { url: `/.netlify/functions/mock-oidc?state=${state}&redirect_uri=${this.config.redirectUri}`, state };
         };
         aw.handleCallback = async function(code) {
             const tokenData = await this.network.postForm('/.netlify/functions/mock-oidc', { code });
-            this.storage.setVerification(tokenData);
+            await this.storage.setVerification(tokenData);
         };
         // ----------------------
 

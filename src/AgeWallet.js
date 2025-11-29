@@ -6,7 +6,7 @@ import Renderer from './modules/Renderer.js';
 import OverlayStrategy from './strategies/OverlayStrategy.js';
 import ApiStrategy from './strategies/ApiStrategy.js';
 
-export default class AgeWallet {
+export class AgeWallet {
 
     constructor(config) {
         // Define default endpoints

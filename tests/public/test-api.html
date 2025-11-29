@@ -15,7 +15,7 @@
     </p>
 
     <script type="module">
-        import AgeWallet from '../../src/index.js';
+        import { AgeWallet } from '../../src/index.js';
 
         const aw = new AgeWallet({
             clientId: 'test-client-id',
@@ -34,12 +34,16 @@
         // --- MOCK OVERRIDES (Same as Overlay test) ---
         aw.generateAuthUrl = async function() {
             const state = this.security.generateRandomString(16);
-            this.storage.setOidcState(state, 'mock-verifier', 'mock-nonce', this.config.redirectUri);
+            const nonce = this.security.generateRandomString(16);
+            const verifier = this.security.generatePkceVerifier();
+            const challenge = await this.security.generatePkceChallenge(verifier);
+
+            await this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
             return { url: `/.netlify/functions/mock-oidc?state=${state}&redirect_uri=${this.config.redirectUri}`, state };
         };
         aw.handleCallback = async function(code, state) {
             const tokenData = await this.network.postForm('/.netlify/functions/mock-oidc', { code });
-            this.storage.setVerification(tokenData);
+            await this.storage.setVerification(tokenData);
         };
         // ---------------------------------------------
 

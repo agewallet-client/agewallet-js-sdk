@@ -1,5 +1,5 @@
 // tests/functions/redis-demo.js
-import AgeWallet from '../../src/index.js';
+import { AgeWallet } from '../../src/index.js';
 import { UpstashStorage } from '../helpers/UpstashStorage.js';
 
 // --- CONFIGURATION ---
