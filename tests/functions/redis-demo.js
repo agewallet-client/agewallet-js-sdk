@@ -70,12 +70,12 @@ export const handler = async (event, context) => {
     if (params.action === 'logout') {
         await aw.storage.clearVerification();
 
-        // FIX: Merge headers so Set-Cookie is sent.
-        // Explicitly expire the cookie.
+        // FIX: Redirect to the static landing page to break the loop.
+        // Hardened cookie deletion with Expires attribute.
         const logoutHeaders = {
             ...commonHeaders,
-            'Location': "/.netlify/functions/redis-demo",
-            'Set-Cookie': `redis_session_id=${sessionId}; Max-Age=0; Path=/; SameSite=Lax`
+            'Location': "/live-redis.html",
+            'Set-Cookie': `redis_session_id=${sessionId}; Max-Age=0; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`
         };
 
         return {
