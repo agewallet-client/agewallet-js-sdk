@@ -18,6 +18,7 @@ export default defineConfig({
         headless: resolve(__dirname, 'tests/public/test-headless.html'),
         liveOverlay: resolve(__dirname, 'tests/public/live-overlay.html'),
         liveApi: resolve(__dirname, 'tests/public/live-api.html'),
+        liveRedis: resolve(__dirname, 'tests/public/live-redis.html'),
       },
     }
   },
@@ -25,7 +26,10 @@ export default defineConfig({
   // 3. Allow Vite to import files from the parent 'src' directory
   server: {
     fs: {
-      allow: ['../..']
+      allow: ['..']
     }
+  },
+  test: {
+    environment: 'happy-dom'
   }
 });
