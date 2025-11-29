@@ -1,3 +1,4 @@
+// src/modules/Storage.js
 /**
  * AgeWallet Storage Module
  * Manages persistence for OIDC state (Session) and verification tokens (Local/Cookie).
@@ -22,9 +23,10 @@ export default class Storage {
      * Set Verification Data (Long-lived)
      * @param {object} tokenData - { access_token, expires_in, etc }
      */
-    setVerification(tokenData) {
+    async setVerification(tokenData) {
         if (this.handler) {
-            return this.handler.set(`${this.prefix}verified`, tokenData);
+            // Support async handlers
+            return await this.handler.set(`${this.prefix}verified`, tokenData);
         }
 
         const expiry = new Date().getTime() + (tokenData.expires_in * 1000);
@@ -33,8 +35,7 @@ export default class Storage {
         if (this.mode === 'local') {
             window.localStorage.setItem(`${this.prefix}verified`, payload);
         } else {
-            // Cookie Fallback (Default)
-            // Secure, Lax, 1 Day default if not specified
+            // Cookie Fallback
             const maxAge = tokenData.expires_in || 86400;
             document.cookie = `${this.prefix}verified=${encodeURIComponent(payload)}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
         }
@@ -44,9 +45,10 @@ export default class Storage {
      * Get Verification Token
      * @returns {string|null} Access Token
      */
-    getVerificationToken() {
+    async getVerificationToken() {
         if (this.handler) {
-            const data = this.handler.get(`${this.prefix}verified`);
+            // Support async handlers (await is safe even if handler returns sync value)
+            const data = await this.handler.get(`${this.prefix}verified`);
             return data ? data.access_token : null;
         }
 
@@ -78,8 +80,8 @@ export default class Storage {
         }
     }
 
-    clearVerification() {
-        if (this.handler) return this.handler.remove(`${this.prefix}verified`);
+    async clearVerification() {
+        if (this.handler) return await this.handler.remove(`${this.prefix}verified`);
 
         if (this.mode === 'local') {
             window.localStorage.removeItem(`${this.prefix}verified`);
@@ -90,16 +92,37 @@ export default class Storage {
 
     // --- OIDC State (Session) ---
 
-    setOidcState(state, verifier, nonce, returnUrl) {
-        // If we are in a server context without session storage, we skip this
-        // (or rely on the custom handler if provided for state)
-        if (!this.session) return;
+    async setOidcState(state, verifier, nonce, returnUrl) {
+        const data = { state, verifier, nonce, returnUrl };
 
-        const data = JSON.stringify({ state, verifier, nonce, returnUrl });
-        this.session.setItem(`${this.prefix}oidc_state`, data);
+        // 1. Prefer Custom Handler (Important for Server-Side/Node)
+        if (this.handler && typeof this.handler.set === 'function') {
+            // We store this with a distinct suffix to not collide with 'verified'
+            // Since the handler usually has user-scoped prefix (e.g. redis session id), this is safe.
+            return await this.handler.set('oidc_state', data);
+        }
+
+        // 2. Fallback to Browser SessionStorage
+        if (this.session) {
+            this.session.setItem(`${this.prefix}oidc_state`, JSON.stringify(data));
+        }
     }
 
-    getOidcState() {
+    async getOidcState() {
+        // 1. Prefer Custom Handler
+        if (this.handler && typeof this.handler.get === 'function') {
+            const data = await this.handler.get('oidc_state');
+            if (data) {
+                // Optional: clean up state after retrieval to prevent reuse
+                if (typeof this.handler.remove === 'function') {
+                    await this.handler.remove('oidc_state');
+                }
+                return data;
+            }
+            return null;
+        }
+
+        // 2. Fallback to Browser SessionStorage
         if (!this.session) return null;
 
         const key = `${this.prefix}oidc_state`;

@@ -16,7 +16,9 @@
   ],
   "scripts": {
     "dev": "vite tests/public",
-    "build": "vite build",
+    "build:demo": "vite build",
+    "build:lib": "vite build --config vite.lib.config.js",
+    "build": "npm run build:demo && npm run build:lib",
     "test": "vitest",
     "preview": "vite preview"
   },

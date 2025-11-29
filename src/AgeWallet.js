@@ -1,3 +1,4 @@
+// src/AgeWallet.js
 import Security from './modules/Security.js';
 import Storage from './modules/Storage.js';
 import Network from './modules/Network.js';
@@ -15,10 +16,15 @@ export default class AgeWallet {
             userinfo: 'https://app.agewallet.io/user/userinfo'
         };
 
+        // Environment Detection / Fallback
+        const isBrowser = typeof window !== 'undefined';
+
         this.config = {
             clientId: '',
             clientSecret: '',
-            redirectUri: typeof window !== 'undefined' ? window.location.href.split('?')[0] : '',
+            // Sanitize redirectUri for Node environments
+            redirectUri: isBrowser ? window.location.href.split('?')[0] : '',
+            environment: 'browser', // 'browser' or 'node'
             mode: 'overlay',
             render: true,
             targetSelector: 'body',
@@ -36,7 +42,8 @@ export default class AgeWallet {
             throw new Error('[AgeWallet] Missing clientId.');
         }
 
-        this.security = new Security();
+        // Initialize Security with environment flag
+        this.security = new Security(this.config.environment);
         this.network = new Network();
 
         if (typeof this.config.storage === 'object') {
@@ -94,7 +101,8 @@ export default class AgeWallet {
         const verifier = this.security.generatePkceVerifier();
         const challenge = await this.security.generatePkceChallenge(verifier);
 
-        this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
+        // Await storage set (important for Async/Redis storage in Node)
+        await this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
 
         const params = new URLSearchParams({
             response_type: 'code',
@@ -114,7 +122,8 @@ export default class AgeWallet {
     }
 
     async handleCallback(code, state) {
-        const stored = this.storage.getOidcState();
+        // Await storage get (important for Async/Redis storage in Node)
+        const stored = await this.storage.getOidcState();
 
         if (!stored || stored.state !== state) {
             console.error('[AgeWallet] Invalid state or session expired.');
@@ -141,7 +150,8 @@ export default class AgeWallet {
                 throw new Error('Age requirement not met.');
             }
 
-            this.storage.setVerification(tokenData);
+            // Await storage set
+            await this.storage.setVerification(tokenData);
 
         } catch (e) {
             console.error('[AgeWallet] Token exchange failed:', e);
@@ -149,7 +159,17 @@ export default class AgeWallet {
     }
 
     logout() {
-        this.storage.clearVerification();
-        window.location.reload();
+        // Handle synchronous or asynchronous clear
+        const result = this.storage.clearVerification();
+
+        // Only reload if in browser
+        if (typeof window !== 'undefined') {
+            // If result is a promise, wait for it then reload
+            if (result instanceof Promise) {
+                result.then(() => window.location.reload());
+            } else {
+                window.location.reload();
+            }
+        }
     }
 }
