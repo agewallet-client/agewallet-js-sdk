@@ -50,14 +50,29 @@ export default class AgeWallet {
     }
 
     async init() {
+        // 1. Immediate UI Feedback for Redirects
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
+
+            // If we are returning from AgeWallet, show "Verifying..." IMMEDIATELY
+            if (params.has('code') && this.config.render) {
+                const target = document.querySelector(this.config.targetSelector);
+                if (target) {
+                    // Show spinner instantly before network request
+                    this.renderer.renderLoading(target);
+                    // Also reveal body so they can see the spinner
+                    this.renderer.revealPage();
+                }
+            }
+
+            // 2. Perform Token Exchange
             if (params.has('code') && params.has('state')) {
                 await this.handleCallback(params.get('code'), params.get('state'));
                 window.history.replaceState({}, document.title, this.config.redirectUri);
             }
         }
 
+        // 3. Execute Strategy
         if (this.config.mode === 'api') {
             const strategy = new ApiStrategy(this);
             await strategy.execute();
@@ -65,6 +80,9 @@ export default class AgeWallet {
             const strategy = new OverlayStrategy(this);
             await strategy.execute();
         }
+
+        // Final fallback: If logic finishes and hider is still there, remove it
+        this.renderer.revealPage();
     }
 
     async generateAuthUrl() {
@@ -109,7 +127,6 @@ export default class AgeWallet {
             code_verifier: stored.verifier
         };
 
-        // Attach Secret if provided (required for Confidential Clients)
         if (this.config.clientSecret) {
             body.client_secret = this.config.clientSecret;
         }
