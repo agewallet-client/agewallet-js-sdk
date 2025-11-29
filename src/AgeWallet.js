@@ -26,7 +26,6 @@ export default class AgeWallet {
             ui: {},
             api: {},
             ...config,
-            // Ensure endpoints are merged correctly (defaults + user overrides)
             endpoints: {
                 ...defaultEndpoints,
                 ...(config.endpoints || {})
@@ -50,18 +49,15 @@ export default class AgeWallet {
     }
 
     async init() {
-        // 1. Immediate UI Feedback for Redirects
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
 
-            // If we are returning from AgeWallet, show "Verifying..." IMMEDIATELY
+            // 1. Immediate UI Feedback for Redirects
             if (params.has('code') && this.config.render) {
                 const target = document.querySelector(this.config.targetSelector);
                 if (target) {
-                    // Show spinner instantly before network request
+                    // Show spinner instantly
                     this.renderer.renderLoading(target);
-                    // Also reveal body so they can see the spinner
-                    this.renderer.revealPage();
                 }
             }
 
@@ -72,7 +68,14 @@ export default class AgeWallet {
             }
         }
 
-        // 3. Execute Strategy
+        // 3. Cleanup Loading State before strategy execution
+        // (So OverlayStrategy doesn't see a spinner and think it's content)
+        if (this.config.render) {
+            const target = document.querySelector(this.config.targetSelector);
+            if (target) this.renderer.clearGate(target);
+        }
+
+        // 4. Execute Strategy
         if (this.config.mode === 'api') {
             const strategy = new ApiStrategy(this);
             await strategy.execute();
@@ -81,7 +84,7 @@ export default class AgeWallet {
             await strategy.execute();
         }
 
-        // Final fallback: If logic finishes and hider is still there, remove it
+        // 5. Final Reveal (Removes anti-flicker style)
         this.renderer.revealPage();
     }
 
@@ -104,7 +107,6 @@ export default class AgeWallet {
             nonce: nonce
         });
 
-        // Use configured Auth endpoint
         return {
             url: `${this.config.endpoints.auth}?${params.toString()}`,
             state: state
@@ -132,10 +134,7 @@ export default class AgeWallet {
         }
 
         try {
-            // Use configured Token endpoint (This allows the Proxy to intercept)
             const tokenData = await this.network.postForm(this.config.endpoints.token, body);
-
-            // Use configured UserInfo endpoint
             const userInfo = await this.network.get(this.config.endpoints.userinfo, tokenData.access_token);
 
             if (userInfo.age_verified !== true) {
