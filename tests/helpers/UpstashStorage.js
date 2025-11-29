@@ -1,10 +1,11 @@
+// tests/helpers/UpstashStorage.js
 import { Redis } from '@upstash/redis';
 
 /**
  * Upstash Redis Adapter
  * Connects the SDK logic to a Redis database via HTTP.
  */
-export default class UpstashStorage {
+export class UpstashStorage {
 
     constructor(url, token, prefix = 'aw_') {
         this.client = new Redis({

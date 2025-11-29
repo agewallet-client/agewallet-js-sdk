@@ -1,6 +1,6 @@
 // tests/functions/redis-demo.js
 import AgeWallet from '../../src/index.js';
-import UpstashStorage from '../helpers/UpstashStorage.js';
+import { UpstashStorage } from '../helpers/UpstashStorage.js';
 
 // --- CONFIGURATION ---
 const REDIS_URL = "https://eternal-unicorn-42562.upstash.io";
