@@ -41,23 +41,27 @@ export const handler = async (event, context) => {
         setCookieHeader = `redis_session_id=${sessionId}; Max-Age=86400; Path=/; SameSite=Lax`;
     }
 
+    // Base Headers (CORS + No-Cache)
     const commonHeaders = {
         'Content-Type': 'text/html; charset=UTF-8',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
     };
+
     if (setCookieHeader) {
         commonHeaders['Set-Cookie'] = setCookieHeader;
     }
 
     // 2. Initialize SDK with Redis Storage
-    // We create a storage instance scoped to this specific user session
     const userStorage = new UpstashStorage(REDIS_URL, REDIS_TOKEN, `aw_${sessionId}_`);
 
     const aw = new AgeWallet({
         clientId: CLIENT_ID,
         clientSecret: CLIENT_SECRET,
         redirectUri: REDIRECT_URI,
-        environment: 'node', // <--- Crucial: Tells SDK to use Node crypto/buffers
+        environment: 'node',
         mode: 'api',
         storage: userStorage
     });
@@ -66,12 +70,17 @@ export const handler = async (event, context) => {
     if (params.action === 'logout') {
         await aw.storage.clearVerification();
 
-        // FIX: Explicitly expire the correct cookie by name
-        commonHeaders['Set-Cookie'] = `redis_session_id=${sessionId}; Max-Age=0; Path=/; SameSite=Lax`;
+        // FIX: Merge headers so Set-Cookie is sent.
+        // Explicitly expire the cookie.
+        const logoutHeaders = {
+            ...commonHeaders,
+            'Location': "/.netlify/functions/redis-demo",
+            'Set-Cookie': `redis_session_id=${sessionId}; Max-Age=0; Path=/; SameSite=Lax`
+        };
 
         return {
             statusCode: 302,
-            headers: { Location: "/.netlify/functions/redis-demo" },
+            headers: logoutHeaders,
             body: ''
         };
     }
@@ -81,7 +90,6 @@ export const handler = async (event, context) => {
         const token = await aw.storage.getVerificationToken();
 
         if (token) {
-            // User is Verified
             return {
                 statusCode: 200,
                 headers: commonHeaders,
@@ -106,10 +114,12 @@ export const handler = async (event, context) => {
         try {
             await aw.handleCallback(params.code, params.state);
 
-            // Redirect to clear params
             return {
                 statusCode: 302,
-                headers: { Location: "/.netlify/functions/redis-demo" },
+                headers: {
+                    ...commonHeaders,
+                    'Location': "/.netlify/functions/redis-demo"
+                },
                 body: ""
             };
         } catch (e) {
@@ -122,7 +132,6 @@ export const handler = async (event, context) => {
     }
 
     // --- RENDER GATE (UNVERIFIED) ---
-    // Auto-generate secure URL with Nonce, PKCE, etc.
     const authData = await aw.generateAuthUrl();
 
     return {
