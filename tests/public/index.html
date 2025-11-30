@@ -92,20 +92,29 @@
 
     <script>
         function checkEnvironment() {
-            // Check for any AgeWallet related cookies or local storage
-            const hasCookies = document.cookie.includes('agewallet_verified') ||
-                               document.cookie.includes('redis_session_id') ||
-                               document.cookie.includes('aw_verified_token');
+            console.log("[Index] Checking environment state...");
+            console.log("[Index] Cookies:", document.cookie);
 
+            // Corrected: Check for 'aw_verified' (Standard SDK) and 'redis_session_id' (Redis)
+            const hasCookies = document.cookie.includes('aw_verified') ||
+                               document.cookie.includes('redis_session_id');
+
+            // Check Local Storage
             const hasLocal = localStorage.getItem('aw_verified');
+            console.log("[Index] LocalStorage aw_verified:", hasLocal ? "FOUND" : "EMPTY");
 
             if (hasCookies || hasLocal) {
+                console.warn("[Index] Active session detected. Showing cleanup modal.");
                 document.body.classList.add('has-active-session');
                 document.getElementById('cleanup-modal').style.display = 'flex';
+            } else {
+                console.log("[Index] Environment is clean.");
             }
         }
 
         function clearEnvironment() {
+            console.log("[Index] Clearing environment...");
+
             // 1. Clear LocalStorage
             localStorage.clear();
 
@@ -114,8 +123,9 @@
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i];
                 const eqPos = cookie.indexOf("=");
-                const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
                 document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                console.log("[Index] Expired cookie:", name);
             }
 
             // 3. Reload to confirm state is clean
