@@ -7,13 +7,24 @@
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
         h1 { border-bottom: 2px solid #eee; padding-bottom: 1rem; }
-        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; transition: transform 0.2s; background: #fff; }
+        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; transition: transform 0.2s; background: #fff; cursor: pointer; position: relative; }
         .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #ccc; }
         .card h3 { margin-top: 0; color: #222; }
         .tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #555; margin-right: 5px;}
         a { text-decoration: none; color: inherit; display: block; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .modal { background: #fff; padding: 2.5rem; border-radius: 12px; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .modal h2 { margin-top: 0; color: #d63638; }
+        .modal p { color: #555; font-size: 1.1em; }
+        .btn-clear { background: #d63638; color: #fff; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
+        .btn-clear:hover { background: #b32426; }
+
+        /* Lock main interface when modal is active */
+        body.has-active-session { overflow: hidden; }
     </style>
 </head>
 <body>
@@ -69,5 +80,50 @@
             </div>
         </a>
     </div>
+
+    <div id="cleanup-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>⚠️ Active Session Detected</h2>
+            <p>You have active verification data from a previous test.</p>
+            <p>To ensure a clean testing environment, you must clear your browser state before proceeding.</p>
+            <button class="btn-clear" onclick="clearEnvironment()">Clear Environment & Reset</button>
+        </div>
+    </div>
+
+    <script>
+        function checkEnvironment() {
+            // Check for any AgeWallet related cookies or local storage
+            const hasCookies = document.cookie.includes('agewallet_verified') ||
+                               document.cookie.includes('redis_session_id') ||
+                               document.cookie.includes('aw_verified_token');
+
+            const hasLocal = localStorage.getItem('aw_verified');
+
+            if (hasCookies || hasLocal) {
+                document.body.classList.add('has-active-session');
+                document.getElementById('cleanup-modal').style.display = 'flex';
+            }
+        }
+
+        function clearEnvironment() {
+            // 1. Clear LocalStorage
+            localStorage.clear();
+
+            // 2. Clear Cookies (Iterate and force expire all cookies on the domain)
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf("=");
+                const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+            }
+
+            // 3. Reload to confirm state is clean
+            window.location.reload();
+        }
+
+        // Check on load
+        checkEnvironment();
+    </script>
 </body>
 </html>
