@@ -7,7 +7,7 @@ const REDIS_URL = "https://eternal-unicorn-42562.upstash.io";
 const REDIS_TOKEN = "AaZCAAIncDIxNWEwNjU2OTQxZjk0NTUxYjMwMzA2MTZmNzJhZjkzZnAyNDI1NjI";
 
 const CLIENT_ID = '46e132f0-d4f5-4895-adb2-046f8aefd6ab';
-const CLIENT_SECRET = 'f57f9a3089f15d1e65a86a7bc664bc85b71f80241b9478146cb24f143f6b4513';
+const CLIENT_SECRET = '1180965ca454e2799a5c981151a798ac6d0881d6b943032914ea40e92dfd9fc2';
 const REDIRECT_URI = "https://agewallet-js-sdk.netlify.app/.netlify/functions/redis-demo";
 
 // --- SESSION UTILITIES ---
