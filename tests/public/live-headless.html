@@ -69,7 +69,8 @@
                 container.style.display = 'block';
                 // We manually parse the JSON response from our Live API
                 try {
-                    const json = JSON.parse(content);
+                    // Network module automatically parses JSON if header is present
+                    const json = (typeof content === 'string') ? JSON.parse(content) : content;
                     container.innerHTML = json.html;
                     log('Content rendered successfully.');
                 } catch(e) {
