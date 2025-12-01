@@ -1,9 +1,18 @@
 [build]
-  # Runs BOTH builds (Demos + Lib)
   command = "npm run build"
-  # Publishes everything so your demos work AND you can download the JS
+
+  # UPDATED: Publish the root dist folder
   publish = "dist"
+
   functions = "tests/functions"
+
+[build.environment]
+  # Force npm to install devDependencies (where Vite lives)
+  NPM_FLAGS = "--include=dev"
+  # Optional: Ensure Node doesn't think it's in strict production mode for the install
+  NODE_ENV = "development"
 
 [dev]
   command = "npm run dev"
+  targetPort = 5173
+  publish = "tests/public"
