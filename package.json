@@ -24,5 +24,10 @@
     "build:demo": "vite build",
     "build:lib": "vite build --config vite.lib.config.js",
     "build": "npm run build:demo && npm run build:lib"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0",
+    "@upstash/redis": "^1.28.0"
   }
 }

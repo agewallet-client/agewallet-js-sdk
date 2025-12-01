@@ -1,16 +1,13 @@
 [build]
-  command = "npm run build"
+  # CRITICAL FIX: We chain the install command before the build command.
+  # This forces Netlify to install 'vite' (a devDependency) even in production mode.
+  command = "npm install --include=dev && npm run build"
 
-  # UPDATED: Publish the root dist folder
+  # Publish the unified dist folder (containing demos + lib)
   publish = "dist"
 
+  # Function directory
   functions = "tests/functions"
-
-[build.environment]
-  # Force npm to install devDependencies (where Vite lives)
-  NPM_FLAGS = "--include=dev"
-  # Optional: Ensure Node doesn't think it's in strict production mode for the install
-  NODE_ENV = "development"
 
 [dev]
   command = "npm run dev"
