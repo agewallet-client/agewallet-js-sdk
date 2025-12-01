@@ -1,32 +1,28 @@
 {
   "name": "@agewallet/js-sdk",
   "version": "1.0.0",
-  "description": "Official JavaScript SDK for AgeWallet Age Verification",
   "type": "module",
-  "main": "./dist/agewallet.umd.js",
-  "module": "./dist/agewallet.es.js",
+  "main": "./dist/agewallet.umd.cjs",
+  "module": "./dist/agewallet.js",
+  "types": "./dist/agewallet.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/agewallet.es.js",
-      "require": "./dist/agewallet.umd.js"
+      "import": "./dist/agewallet.js",
+      "require": "./dist/agewallet.umd.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist/agewallet.js",
+    "dist/agewallet.js.map",
+    "dist/agewallet.umd.cjs",
+    "dist/agewallet.umd.cjs.map",
+    "dist/agewallet.min.js",
+    "dist/agewallet.min.js.map"
   ],
   "scripts": {
     "dev": "vite tests/public",
     "build:demo": "vite build",
     "build:lib": "vite build --config vite.lib.config.js",
-    "build": "npm run build:demo && npm run build:lib",
-    "test": "vitest",
-    "preview": "vite preview"
-  },
-  "author": "AgeWallet LLC",
-  "license": "MIT",
-  "devDependencies": {
-    "vite": "^5.0.0",
-    "vitest": "^1.0.0",
-    "@upstash/redis": "^1.28.0"
+    "build": "npm run build:demo && npm run build:lib"
   }
 }

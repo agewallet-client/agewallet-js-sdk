@@ -1,12 +1,9 @@
 [build]
+  # Runs BOTH builds (Demos + Lib)
   command = "npm run build"
-
-  # UPDATED: Publish the root dist folder
+  # Publishes everything so your demos work AND you can download the JS
   publish = "dist"
-
   functions = "tests/functions"
 
 [dev]
   command = "npm run dev"
-  targetPort = 5173
-  publish = "tests/public"
