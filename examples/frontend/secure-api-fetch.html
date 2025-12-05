@@ -25,7 +25,7 @@
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_API_ID,
-            clientSecret: import.meta.env.VITE_AW_API_SECRET,
+            // clientSecret REMOVED - Handled by Proxy
             mode: 'api',
             targetSelector: '#app',
             redirectUri: window.location.href.split('?')[0],

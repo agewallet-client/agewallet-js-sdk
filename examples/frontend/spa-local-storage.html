@@ -26,7 +26,7 @@
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_LOCAL_ID,
-            clientSecret: import.meta.env.VITE_AW_LOCAL_SECRET,
+            // clientSecret REMOVED - Handled by Proxy
             mode: 'overlay',
             storage: 'local',
             redirectUri: window.location.href.split('?')[0],

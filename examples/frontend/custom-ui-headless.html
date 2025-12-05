@@ -40,7 +40,7 @@
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_HEADLESS_ID,
-            clientSecret: import.meta.env.VITE_AW_HEADLESS_SECRET,
+            // clientSecret REMOVED - Handled by Proxy
             mode: 'api',
             render: false,
             redirectUri: window.location.href.split('?')[0],

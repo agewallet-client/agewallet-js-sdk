@@ -1,15 +1,13 @@
 [build]
-  # Chain install command to ensure vite is available
   command = "npm install --include=dev && npm run build"
-
-  # Publish the unified dist folder
   publish = "dist"
-
-  # Updated Function directory
   functions = "examples/backend/netlify-functions"
+
+[build.environment]
+  # Whitelist Client IDs so Netlify doesn't block the build when it sees them in the frontend
+  SECRETS_SCAN_OMIT_KEYS = "VITE_AW_OVERLAY_ID,VITE_AW_API_ID,VITE_AW_HEADLESS_ID,VITE_AW_LOCAL_ID,VITE_AW_BRANDING_ID"
 
 [dev]
   command = "npm run dev"
   targetPort = 5173
-  # Updated Frontend directory
   publish = "examples/frontend"
