@@ -1,13 +1,13 @@
-// tests/functions/redis-demo.js
-import { AgeWallet } from '../../src/index.js';
+import { AgeWallet } from '../../../src/index.js';
 import { UpstashStorage } from '../helpers/UpstashStorage.js';
 
-// --- CONFIGURATION ---
-const REDIS_URL = "https://eternal-unicorn-42562.upstash.io";
-const REDIS_TOKEN = "AaZCAAIncDIxNWEwNjU2OTQxZjk0NTUxYjMwMzA2MTZmNzJhZjkzZnAyNDI1NjI";
+// --- CONFIGURATION (Env Vars) ---
+const REDIS_URL = process.env.UPSTASH_REDIS_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_TOKEN;
 
-const CLIENT_ID = '46e132f0-d4f5-4895-adb2-046f8aefd6ab';
-const CLIENT_SECRET = '1180965ca454e2799a5c981151a798ac6d0881d6b943032914ea40e92dfd9fc2';
+const CLIENT_ID = process.env.AW_REDIS_ID;
+const CLIENT_SECRET = process.env.AW_REDIS_SECRET;
+// Note: We assume the Redirect URI is configured in Netlify or derived dynamically
 const REDIRECT_URI = "https://agewallet-js-sdk.netlify.app/.netlify/functions/redis-demo";
 
 // --- SESSION UTILITIES ---
@@ -35,13 +35,11 @@ export const handler = async (event, context) => {
     let sessionId = cookies['redis_session_id'];
     let setCookieHeader = null;
 
-    // 1. Session Setup
     if (!sessionId) {
         sessionId = generateSimpleSessionId(headers['x-nf-client-connection-ip'] || 'unknown');
         setCookieHeader = `redis_session_id=${sessionId}; Max-Age=86400; Path=/; SameSite=Lax`;
     }
 
-    // Base Headers (CORS + No-Cache)
     const commonHeaders = {
         'Content-Type': 'text/html; charset=UTF-8',
         'Access-Control-Allow-Origin': '*',
@@ -54,7 +52,7 @@ export const handler = async (event, context) => {
         commonHeaders['Set-Cookie'] = setCookieHeader;
     }
 
-    // 2. Initialize SDK with Redis Storage
+    // Initialize SDK with Redis Storage
     const userStorage = new UpstashStorage(REDIS_URL, REDIS_TOKEN, `aw_${sessionId}_`);
 
     const aw = new AgeWallet({
@@ -66,29 +64,20 @@ export const handler = async (event, context) => {
         storage: userStorage
     });
 
-    // --- LOGOUT FLOW ---
+    // Logout
     if (params.action === 'logout') {
         await aw.storage.clearVerification();
-
-        // FIX: Redirect to the static landing page to break the loop.
-        // Hardened cookie deletion with Expires attribute.
         const logoutHeaders = {
             ...commonHeaders,
-            'Location': "/live-redis.html",
+            'Location': "/ssr-redis-session.html",
             'Set-Cookie': `redis_session_id=${sessionId}; Max-Age=0; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`
         };
-
-        return {
-            statusCode: 302,
-            headers: logoutHeaders,
-            body: ''
-        };
+        return { statusCode: 302, headers: logoutHeaders, body: '' };
     }
 
-    // --- CHECK VERIFICATION STATUS ---
+    // Check Status
     try {
         const token = await aw.storage.getVerificationToken();
-
         if (token) {
             return {
                 statusCode: 200,
@@ -109,17 +98,13 @@ export const handler = async (event, context) => {
         console.error("Redis Read Error:", e);
     }
 
-    // --- CALLBACK FLOW ---
+    // Callback
     if (params.code && params.state) {
         try {
             await aw.handleCallback(params.code, params.state);
-
             return {
                 statusCode: 302,
-                headers: {
-                    ...commonHeaders,
-                    'Location': "/.netlify/functions/redis-demo"
-                },
+                headers: { ...commonHeaders, 'Location': "/.netlify/functions/redis-demo" },
                 body: ""
             };
         } catch (e) {
@@ -131,9 +116,8 @@ export const handler = async (event, context) => {
         }
     }
 
-    // --- RENDER GATE (UNVERIFIED) ---
+    // Gate
     const authData = await aw.generateAuthUrl();
-
     return {
         statusCode: 200,
         headers: commonHeaders,

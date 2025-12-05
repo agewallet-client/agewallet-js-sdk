@@ -164,3 +164,19 @@ The SDK works natively in Node.js (v19+) for server-side rendering (SSR) or API 
     if (token) {
        // User is verified
     }
+
+## Examples & Recipes
+
+This repository includes a robust set of code recipes in the `examples/` directory.
+
+### Frontend Recipes
+
+- **[Overlay Mode](examples/frontend/overlay-mode.html):** The standard full-screen gate integration.
+- **[API Mode](examples/frontend/secure-api-fetch.html):** Securely fetching content from a backend only after verification.
+- **[Headless Mode](examples/frontend/custom-ui-headless.html):** Building a completely custom UI (React/Vue style) without the SDK's default styling.
+- **[Local Storage](examples/frontend/spa-local-storage.html):** Persisting tokens in `localStorage` for Single Page Apps.
+- **[Custom Branding](examples/frontend/branding-options.html):** Customizing the default gate's logo, text, and colors.
+
+### Backend Recipes
+
+- **[SSR + Redis](examples/frontend/ssr-redis-session.html):** A Node.js example using Redis to handle verification sessions server-side.

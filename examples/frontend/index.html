@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgeWallet SDK - Live Tests</title>
+    <title>AgeWallet SDK - Code Recipes</title>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
         h1 { border-bottom: 2px solid #eee; padding-bottom: 1rem; }
@@ -23,60 +23,59 @@
         .btn-clear { background: #d63638; color: #fff; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
         .btn-clear:hover { background: #b32426; }
 
-        /* Lock main interface when modal is active */
         body.has-active-session { overflow: hidden; }
     </style>
 </head>
 <body>
-    <h1>🚀 AgeWallet SDK Live Tests</h1>
-    <p>Production-ready scenarios connecting to the real AgeWallet API.</p>
+    <h1>📚 AgeWallet SDK Recipes</h1>
+    <p>Production-ready examples for integrating AgeWallet into your application.</p>
 
     <div class="grid">
-        <a href="live-overlay.html">
+        <a href="overlay-mode.html">
             <div class="card">
-                <h3>🟢 Live Overlay</h3>
+                <h3>🟢 Overlay Mode</h3>
                 <p><span class="tag">Standard</span> <span class="tag">Cookies</span></p>
-                <p>Basic client-side gating. Page content loads but is hidden by UI.</p>
+                <p>The default integration. A full-screen age gate overlay that prevents access until verified.</p>
             </div>
         </a>
 
-        <a href="live-api.html">
+        <a href="secure-api-fetch.html">
             <div class="card">
-                <h3>🔐 Live API (Secure)</h3>
+                <h3>🔐 API Mode (Secure)</h3>
                 <p><span class="tag">High Security</span> <span class="tag">Fetch</span></p>
-                <p>Content is fetched securely from backend only after verification.</p>
+                <p>Content is fetched securely from your backend only after verification.</p>
             </div>
         </a>
 
-        <a href="live-redis.html">
+        <a href="ssr-redis-session.html">
             <div class="card">
-                <h3>💾 Live Redis (SSR)</h3>
+                <h3>💾 SSR + Redis</h3>
                 <p><span class="tag">Server-Side</span> <span class="tag">Node.js</span></p>
                 <p>Full-page protection using Redis sessions. Zero client-side state.</p>
             </div>
         </a>
 
-        <a href="live-local.html">
+        <a href="spa-local-storage.html">
             <div class="card">
                 <h3>💾 Local Storage</h3>
                 <p><span class="tag">SPA Friendly</span> <span class="tag">No Cookies</span></p>
-                <p>Uses <code>localStorage</code> instead of cookies for persistence.</p>
+                <p>Persist verification state in <code>localStorage</code> for Single Page Apps.</p>
             </div>
         </a>
 
-        <a href="live-branding.html">
+        <a href="branding-options.html">
             <div class="card">
                 <h3>🎨 Custom Branding</h3>
                 <p><span class="tag">UI Config</span> <span class="tag">CSS</span></p>
-                <p>Demonstrates custom logo, copy, and CSS overrides.</p>
+                <p>How to customize the logo, text, and colors of the default gate.</p>
             </div>
         </a>
 
-        <a href="live-headless.html">
+        <a href="custom-ui-headless.html">
             <div class="card">
                 <h3>🧠 Headless Mode</h3>
                 <p><span class="tag">React/Vue</span> <span class="tag">No UI</span></p>
-                <p>SDK handles logic, App handles UI. Full control.</p>
+                <p>Use the SDK for logic only. Render your own completely custom UI.</p>
             </div>
         </a>
     </div>
@@ -84,55 +83,34 @@
     <div id="cleanup-modal" class="modal-overlay">
         <div class="modal">
             <h2>⚠️ Active Session Detected</h2>
-            <p>You have active verification data from a previous test.</p>
-            <p>To ensure a clean testing environment, you must clear your browser state before proceeding.</p>
+            <p>You have active verification data from a previous session.</p>
+            <p>To ensure a clean environment for these recipes, please clear your browser state.</p>
             <button class="btn-clear" onclick="clearEnvironment()">Clear Environment & Reset</button>
         </div>
     </div>
 
     <script>
         function checkEnvironment() {
-            console.log("[Index] Checking environment state...");
-            console.log("[Index] Cookies:", document.cookie);
-
-            // Corrected: Check for 'aw_verified' (Standard SDK) and 'redis_session_id' (Redis)
-            const hasCookies = document.cookie.includes('aw_verified') ||
-                               document.cookie.includes('redis_session_id');
-
-            // Check Local Storage
+            const hasCookies = document.cookie.includes('aw_verified') || document.cookie.includes('redis_session_id');
             const hasLocal = localStorage.getItem('aw_verified');
-            console.log("[Index] LocalStorage aw_verified:", hasLocal ? "FOUND" : "EMPTY");
 
             if (hasCookies || hasLocal) {
-                console.warn("[Index] Active session detected. Showing cleanup modal.");
                 document.body.classList.add('has-active-session');
                 document.getElementById('cleanup-modal').style.display = 'flex';
-            } else {
-                console.log("[Index] Environment is clean.");
             }
         }
 
         function clearEnvironment() {
-            console.log("[Index] Clearing environment...");
-
-            // 1. Clear LocalStorage
             localStorage.clear();
-
-            // 2. Clear Cookies (Iterate and force expire all cookies on the domain)
             const cookies = document.cookie.split(";");
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i];
                 const eqPos = cookie.indexOf("=");
                 const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
                 document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                console.log("[Index] Expired cookie:", name);
             }
-
-            // 3. Reload to confirm state is clean
             window.location.reload();
         }
-
-        // Check on load
         checkEnvironment();
     </script>
 </body>

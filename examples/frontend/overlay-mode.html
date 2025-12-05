@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Test: Overlay</title>
+    <title>Recipe: Overlay Mode</title>
     <style>
         body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
         a.back-link { display: inline-block; margin-bottom: 20px; color: #666; text-decoration: none; }
@@ -13,29 +13,22 @@
 <body>
     <a href="index.html" class="back-link">← Back to Index</a>
 
-    <h1>🟢 Live Production Test</h1>
-    <p>This page connects to the <strong>Real AgeWallet API</strong> (via Proxy).</p>
+    <h1>🟢 Recipe: Overlay Mode</h1>
+    <p>The standard integration. This page loads content immediately, but the AgeWallet SDK overlays a gate if the user is unverified.</p>
 
     <div style="background: #eee; padding: 20px; margin: 20px 0; border-radius: 8px;">
         <h3>Restricted Content</h3>
         <p>If you can read this without an overlay, you are verified.</p>
     </div>
 
-    <!-- <button onclick="AgeWallet.logout()">Logout / Reset</button> -->
-
     <script type="module">
         import { AgeWallet } from '../../src/index.js';
 
-        // CREDENTIALS FOR OVERLAY CLIENT
-        const CLIENT_ID = '383e7d2b-f340-47de-9dcc-fde5ca6085e0';
-        const CLIENT_SECRET = '9c052016db633d01a24ffc4d7d885b387bcbc7776733ae9d25b77dcd9ae15a99';
-
         const aw = new AgeWallet({
-            clientId: CLIENT_ID,
-            clientSecret: CLIENT_SECRET,
+            clientId: import.meta.env.VITE_AW_OVERLAY_ID,
+            clientSecret: import.meta.env.VITE_AW_OVERLAY_SECRET,
             mode: 'overlay',
             redirectUri: window.location.href.split('?')[0],
-            // CRITICAL: Point token exchange to local proxy to bypass CORS
             endpoints: {
                 token: '/.netlify/functions/proxy-token'
             }

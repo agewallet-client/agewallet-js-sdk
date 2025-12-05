@@ -5,6 +5,10 @@
   "main": "./dist/agewallet.umd.cjs",
   "module": "./dist/agewallet.js",
   "types": "./dist/agewallet.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agewallet-client/agewallet-js-sdk.git"
+  },
   "exports": {
     ".": {
       "import": "./dist/agewallet.js",
@@ -20,7 +24,7 @@
     "dist/agewallet.min.js.map"
   ],
   "scripts": {
-    "dev": "vite tests/public",
+    "dev": "vite examples/frontend",
     "build:demo": "vite build",
     "build:lib": "vite build --config vite.lib.config.js",
     "build": "npm run build:demo && npm run build:lib"

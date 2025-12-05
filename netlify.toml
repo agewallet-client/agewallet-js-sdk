@@ -1,15 +1,15 @@
 [build]
-  # CRITICAL FIX: We chain the install command before the build command.
-  # This forces Netlify to install 'vite' (a devDependency) even in production mode.
+  # Chain install command to ensure vite is available
   command = "npm install --include=dev && npm run build"
 
-  # Publish the unified dist folder (containing demos + lib)
+  # Publish the unified dist folder
   publish = "dist"
 
-  # Function directory
-  functions = "tests/functions"
+  # Updated Function directory
+  functions = "examples/backend/netlify-functions"
 
 [dev]
   command = "npm run dev"
   targetPort = 5173
-  publish = "tests/public"
+  # Updated Frontend directory
+  publish = "examples/frontend"

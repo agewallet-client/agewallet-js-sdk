@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Test: API Mode</title>
+    <title>Recipe: API Mode</title>
     <style>
         body { font-family: system-ui, sans-serif; padding: 2rem; background: #111; color: white; }
         a.back-link { display: inline-block; margin-bottom: 20px; color: #ccc; text-decoration: none; }
@@ -13,8 +13,8 @@
 <body>
     <a href="index.html" class="back-link">← Back to Index</a>
 
-    <h1>🔐 Live API Mode</h1>
-    <p>Fetching content from Netlify Function validated by AgeWallet.</p>
+    <h1>🔐 Recipe: Secure API Mode</h1>
+    <p>Content is fetched from a backend function only <strong>after</strong> successful verification.</p>
 
     <div id="app"></div>
 
@@ -23,21 +23,15 @@
     <script type="module">
         import { AgeWallet } from '../../src/index.js';
 
-        // CREDENTIALS FOR API CLIENT
-        const CLIENT_ID = '3801e03e-c8f8-4577-8717-74eed73c1a50';
-        const CLIENT_SECRET = '1e841b24e77c5dd7c0ddd7262400e6e5a13cf742d5b7ac6b154cba13e4f2578a';
-
         const aw = new AgeWallet({
-            clientId: CLIENT_ID,
-            clientSecret: CLIENT_SECRET,
+            clientId: import.meta.env.VITE_AW_API_ID,
+            clientSecret: import.meta.env.VITE_AW_API_SECRET,
             mode: 'api',
             targetSelector: '#app',
             redirectUri: window.location.href.split('?')[0],
-            // Hits your "Live Content" backend simulator
             api: {
                 endpoint: '/.netlify/functions/live-content'
             },
-            // CRITICAL: Point token exchange to local proxy to bypass CORS
             endpoints: {
                 token: '/.netlify/functions/proxy-token'
             }

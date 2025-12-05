@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Test: Branding</title>
+    <title>Recipe: Custom Branding</title>
     <style>
         body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
         a.back-link { display: inline-block; margin-bottom: 20px; color: #666; text-decoration: none; }
         a.back-link:hover { text-decoration: underline; }
 
-        /* Custom CSS Override Example */
         .aw-gate__btn--yes { background-color: #d946ef !important; }
         .aw-gate__btn--yes:hover { background-color: #c026d3 !important; }
     </style>
@@ -17,22 +16,20 @@
 <body>
     <a href="index.html" class="back-link">← Back to Index</a>
 
-    <h1>🎨 Live Test: Branding & UI</h1>
-    <p>This page demonstrates custom text, logo, and CSS overrides.</p>
+    <h1>🎨 Recipe: Custom Branding</h1>
+    <p>Demonstrates configuring custom text, logos, and CSS overrides.</p>
 
     <div style="background: #eee; padding: 20px; margin: 20px 0; border-radius: 8px;">
         <h3>Restricted Content</h3>
-        <p>The gate should have a custom title ("VIP Access Only") and a pink button.</p>
+        <p>The gate below uses a custom title ("VIP Access Only") and a pink button via CSS.</p>
     </div>
-
-    <!-- <button onclick="AgeWallet.logout()">Logout / Reset</button> -->
 
     <script type="module">
         import { AgeWallet } from '../../src/index.js';
 
         const aw = new AgeWallet({
-            clientId: '13b40f10-00a5-40e0-960a-673468812c75',
-            clientSecret: '58f6b744feba6d31169e1c2991de6fe79670523f6799affd9bdb5e59f80f7f91',
+            clientId: import.meta.env.VITE_AW_BRANDING_ID,
+            clientSecret: import.meta.env.VITE_AW_BRANDING_SECRET,
             mode: 'overlay',
             redirectUri: window.location.href.split('?')[0],
             endpoints: {
@@ -42,7 +39,7 @@
                 title: 'VIP Access Only',
                 description: 'This is a custom message defined in the SDK config.',
                 buttonText: 'Enter VIP Lounge',
-                logo: 'https://cdn-icons-png.flaticon.com/512/6941/6941697.png' // Example generic icon
+                logo: 'https://cdn-icons-png.flaticon.com/512/6941/6941697.png'
             }
         });
 

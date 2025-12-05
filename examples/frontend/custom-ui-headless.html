@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Test: Headless</title>
+    <title>Recipe: Headless Mode</title>
     <style>
         body { font-family: monospace; padding: 2rem; background: #f4f4f5; }
         a.back-link { display: inline-block; margin-bottom: 20px; color: #666; text-decoration: none; }
         .log-box { background: #fff; padding: 1rem; border-radius: 4px; min-height: 150px; border: 1px solid #ccc; margin-bottom: 1rem; }
         .status { font-weight: bold; color: blue; }
         #app-ui, #secure-content { margin-bottom: 1rem; padding: 1rem; background: white; border: 1px solid #ddd; display: none; }
+        .custom-btn { background: blue; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
     <a href="index.html" class="back-link">← Back to Index</a>
 
-    <h1>🧠 Live Test: Headless Mode</h1>
+    <h1>🧠 Recipe: Headless Mode</h1>
     <p>Status: <span id="status" class="status">Initializing...</span></p>
 
     <div id="app-ui">
         <h3>Custom React/Vue App UI</h3>
-        <p>This UI is rendered by the "App", not the SDK.</p>
-        <button id="custom-verify-btn" style="background:blue; color:white; padding:10px 20px; border:none; cursor:pointer;">
+        <p>This UI is completely custom. The SDK provides the logic, you provide the pixels.</p>
+        <button id="custom-verify-btn" class="custom-btn">
             Verify with AgeWallet
         </button>
     </div>
 
     <div id="secure-content"></div>
 
-    <pre class="log-box" id="logs">logs:\n</pre>
-    <!-- <button onclick="window.AgeWallet.logout()">Reset</button> -->
+    <pre class="log-box" id="logs">SDK Logs:\n</pre>
 
     <script type="module">
         import { AgeWallet } from '../../src/index.js';
@@ -39,40 +39,36 @@
         }
 
         const aw = new AgeWallet({
-            clientId: 'b43c753b-0de9-4ccf-9432-06e6f0b2bb57',
-            clientSecret: '7bbdd943bd3e99639a69641566250ccdce6bf6506303d73864c16964ffd50102',
+            clientId: import.meta.env.VITE_AW_HEADLESS_ID,
+            clientSecret: import.meta.env.VITE_AW_HEADLESS_SECRET,
             mode: 'api',
-            render: false, // HEADLESS MODE
+            render: false,
             redirectUri: window.location.href.split('?')[0],
             api: { endpoint: '/.netlify/functions/live-content' },
             endpoints: { token: '/.netlify/functions/proxy-token' },
 
-            // Event Handlers
             onUnverified: (authUrl) => {
-                log('Event: onUnverified received.');
+                log('User is unverified. Showing custom UI.');
                 document.getElementById('status').innerText = 'Unverified';
                 document.getElementById('app-ui').style.display = 'block';
 
                 const btn = document.getElementById('custom-verify-btn');
                 btn.onclick = () => {
-                    log('Redirecting to Auth URL...');
+                    log('Redirecting to AgeWallet...');
                     window.location.href = authUrl;
                 };
             },
 
             onVerified: (content) => {
-                log('Event: onVerified received.');
+                log('User is verified. Rendering content.');
                 document.getElementById('status').innerText = 'Verified';
                 document.getElementById('app-ui').style.display = 'none';
 
                 const container = document.getElementById('secure-content');
                 container.style.display = 'block';
-                // We manually parse the JSON response from our Live API
                 try {
-                    // Network module automatically parses JSON if header is present
                     const json = (typeof content === 'string') ? JSON.parse(content) : content;
                     container.innerHTML = json.html;
-                    log('Content rendered successfully.');
                 } catch(e) {
                     log('Error parsing content: ' + e.message);
                 }
