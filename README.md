@@ -31,7 +31,7 @@ Designed for versatility, it supports everything from static landing pages to Si
 
 ### Option 2: CDN (Browser Script)
 
-    <script src="[https://unpkg.com/@agewallet/js-sdk@latest/dist/agewallet.umd.js](https://unpkg.com/@agewallet/js-sdk@latest/dist/agewallet.umd.js)"></script>
+    <script src="https://unpkg.com/@agewallet/js-sdk@latest/dist/agewallet.umd.cjs"></script>
     <script>
       // Access via global window.AgeWallet
       const aw = new AgeWallet({ ... });
@@ -61,9 +61,13 @@ The fastest way to protect a landing page. This renders a fixed-position age gat
 | `redirectUri` | `string` | `window.location` | The URL users return to after verification. Must be whitelisted in Dashboard. |
 | `mode` | `string` | `'overlay'` | `'overlay'` (Default) or `'api'` (Secure Fetch). |
 | `render` | `boolean` | `true` | Set to `false` for Headless Mode (no UI injected). |
-| `storage` | `string` | `'cookie'` | `'cookie'` (Default) or `'local'` (LocalStorage). |
+| `storage` | `string` \| `object` | `'cookie'` | `'cookie'`, `'local'`, or a custom object implementing `SessionHandlerInterface`. |
+| `targetSelector` | `string` | `'body'` | CSS selector for the container where the Gate UI will be rendered. |
+| `api` | `object` | `{}` | Required for `api` mode. Must contain an `endpoint` URL. |
 | `environment` | `string` | `'browser'` | `'browser'` (Default) or `'node'` (Server-Side). |
 | `ui` | `object` | `{}` | Customize text and logo (see below). |
+| `onVerified` | `function` | `null` | Callback fired when verification succeeds. Receives content (API mode) or null (Overlay mode). |
+| `onUnverified` | `function` | `null` | Callback fired when verification is required. Receives the `authUrl` string. |
 
 ## Advanced Usage
 
@@ -74,7 +78,7 @@ For full control over the UI, disable the built-in renderer and use event handle
     const aw = new AgeWallet({
         clientId: 'YOUR_ID',
         render: false, // Disable SDK UI
-        redirectUri: '[https://mysite.com/callback](https://mysite.com/callback)',
+        redirectUri: 'https://mysite.com/callback',
 
         // Called when user needs to verify
         onUnverified: (authUrl) => {
@@ -112,8 +116,7 @@ You can customize the look and feel of the built-in age gate by passing a `ui` o
             title: "Restricted Access",
             description: "Please verify your age to enter the VIP lounge.",
             buttonText: "I am 18+",
-            logo: "[https://example.com/my-logo.png](https://example.com/my-logo.png)", // Optional
-            logoWidth: 150 // Optional (px)
+            logo: "https://example.com/my-logo.png", // Optional
         }
     });
 
@@ -143,7 +146,7 @@ The SDK works natively in Node.js (v19+) for server-side rendering (SSR) or API 
     const aw = new AgeWallet({
         clientId: 'YOUR_ID',
         clientSecret: 'YOUR_SECRET',
-        redirectUri: '[https://mysite.com/callback](https://mysite.com/callback)',
+        redirectUri: 'https://mysite.com/callback',
         environment: 'node', // <--- Crucial for Node.js support
         mode: 'api',
         storage: myStorage
