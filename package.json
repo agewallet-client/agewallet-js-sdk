@@ -24,14 +24,17 @@
     "dist/agewallet.min.js.map"
   ],
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "vite examples/frontend",
     "build:demo": "vite build",
     "build:lib": "vite build --config vite.lib.config.js",
     "build": "npm run build:demo && npm run build:lib"
   },
   "devDependencies": {
+    "@upstash/redis": "^1.28.0",
+    "happy-dom": "^20.0.11",
     "vite": "^5.0.0",
-    "vitest": "^1.0.0",
-    "@upstash/redis": "^1.28.0"
+    "vitest": "^1.0.0"
   }
 }
