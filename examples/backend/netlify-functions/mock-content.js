@@ -8,10 +8,16 @@ exports.handler = async function(event, context) {
 
     const token = authHeader.split(' ')[1];
 
-    // Simple validation: Decode base64 and check "age_verified"
+    // Simple validation
     try {
-        const data = JSON.parse(Buffer.from(token, 'base64').toString());
-        if (data.age_verified !== true) throw new Error();
+        // Exemption Check
+        if (token === 'region_exempt_placeholder') {
+            // Pass
+        } else {
+            // Standard Mock Token (Base64 JSON)
+            const data = JSON.parse(Buffer.from(token, 'base64').toString());
+            if (data.age_verified !== true) throw new Error();
+        }
     } catch (e) {
         return { statusCode: 403, body: JSON.stringify({ error: 'Invalid Token' }) };
     }

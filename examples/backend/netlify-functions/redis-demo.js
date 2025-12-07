@@ -98,6 +98,24 @@ export const handler = async (event, context) => {
         console.error("Redis Read Error:", e);
     }
 
+    // Error / Exemption Handling (e.g. Regional Access Denied)
+    if (params.error && params.state) {
+        const handled = await aw.handleError(params.error, params.error_description, params.state);
+        if (handled) {
+            return {
+                statusCode: 302,
+                headers: { ...commonHeaders, 'Location': "/.netlify/functions/redis-demo" },
+                body: ""
+            };
+        }
+        // If not handled (actual error), fall through to show the error message or gate
+        return {
+            statusCode: 400,
+            headers: commonHeaders,
+            body: `Verification Error: ${params.error_description || params.error}`
+        };
+    }
+
     // Callback
     if (params.code && params.state) {
         try {

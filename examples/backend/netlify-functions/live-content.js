@@ -19,33 +19,45 @@ exports.handler = async function(event, context) {
     const token = authHeader.split(" ")[1];
 
     try {
-        // 2. Validate Token by calling AgeWallet UserInfo
-        const userData = await new Promise((resolve, reject) => {
-            const options = {
-                hostname: 'app.agewallet.io',
-                path: '/user/userinfo',
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
+        let userData;
+
+        // 2a. Check for Regional Exemption (Synthetic Token)
+        if (token === 'region_exempt_placeholder') {
+            console.log("Regional Exemption Detected. Bypassing validation.");
+            userData = {
+                age_verified: true,
+                sub: 'exempt_user_' + Math.random().toString(36).substring(7)
             };
-
-            const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => {
-                    if (res.statusCode >= 200 && res.statusCode < 300) {
-                        resolve(JSON.parse(data));
-                    } else {
-                        reject(new Error(`UserInfo failed: ${res.statusCode}`));
+        }
+        // 2b. Validate Real Token by calling AgeWallet UserInfo
+        else {
+            userData = await new Promise((resolve, reject) => {
+                const options = {
+                    hostname: 'app.agewallet.io',
+                    path: '/user/userinfo',
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
                     }
-                });
-            });
+                };
 
-            req.on('error', (e) => reject(e));
-            req.end();
-        });
+                const req = https.request(options, (res) => {
+                    let data = '';
+                    res.on('data', chunk => data += chunk);
+                    res.on('end', () => {
+                        if (res.statusCode >= 200 && res.statusCode < 300) {
+                            resolve(JSON.parse(data));
+                        } else {
+                            reject(new Error(`UserInfo failed: ${res.statusCode}`));
+                        }
+                    });
+                });
+
+                req.on('error', (e) => reject(e));
+                req.end();
+            });
+        }
 
         // 3. Check Age Requirement
         if (userData.age_verified !== true) {

@@ -60,7 +60,8 @@ export class AgeWallet {
             const params = new URLSearchParams(window.location.search);
 
             // 1. Immediate UI Feedback for Redirects
-            if (params.has('code') && this.config.render) {
+            // Only show loading if we have a code OR a relevant error
+            if ((params.has('code') || params.has('error')) && this.config.render) {
                 const target = document.querySelector(this.config.targetSelector);
                 if (target) {
                     // Show spinner instantly
@@ -68,10 +69,22 @@ export class AgeWallet {
                 }
             }
 
-            // 2. Perform Token Exchange
+            // 2. Perform Token Exchange or Error Handling
             if (params.has('code') && params.has('state')) {
                 await this.handleCallback(params.get('code'), params.get('state'));
                 window.history.replaceState({}, document.title, this.config.redirectUri);
+            }
+            else if (params.has('error') && params.has('state')) {
+                const handled = await this.handleError(
+                    params.get('error'),
+                    params.get('error_description'),
+                    params.get('state')
+                );
+
+                // Only clean URL if we successfully handled the "error" (e.g. it was an exemption)
+                if (handled) {
+                    window.history.replaceState({}, document.title, this.config.redirectUri);
+                }
             }
         }
 
@@ -156,6 +169,45 @@ export class AgeWallet {
         } catch (e) {
             console.error('[AgeWallet] Token exchange failed:', e);
         }
+    }
+
+    /**
+     * Handles OIDC Errors (specifically Regional Exemptions)
+     * @param {string} error - The error code (e.g. 'access_denied')
+     * @param {string} description - The error description
+     * @param {string} state - The CSRF state parameter
+     * @returns {Promise<boolean>} - True if error was handled as a success (exemption), False otherwise
+     */
+    async handleError(error, description, state) {
+        // 1. Validate State (CSRF Protection)
+        const stored = await this.storage.getOidcState();
+        if (!stored || stored.state !== state) {
+            console.warn('[AgeWallet] Error received with invalid state. Ignoring.');
+            return false;
+        }
+
+        // 2. Check for Regional Exemption
+        // "access_denied" is the OIDC standard error, but the description confirms it's a geo-exemption
+        if (error === 'access_denied' && description === 'Region does not require verification') {
+            console.log('[AgeWallet] Regional exemption detected. Bypass granted.');
+
+            // 3. Create Synthetic Token (24h validity)
+            const syntheticToken = {
+                access_token: 'region_exempt_placeholder',
+                token_type: 'Bearer',
+                expires_in: 86400,
+                scope: 'openid age',
+                is_synthetic: true
+            };
+
+            // 4. Store as if it were a real token
+            await this.storage.setVerification(syntheticToken);
+            return true;
+        }
+
+        // 3. Log genuine errors
+        console.error(`[AgeWallet] OIDC Error: ${error} - ${description}`);
+        return false;
     }
 
     logout() {
