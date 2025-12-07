@@ -209,19 +209,4 @@ export class AgeWallet {
         console.error(`[AgeWallet] OIDC Error: ${error} - ${description}`);
         return false;
     }
-
-    logout() {
-        // Handle synchronous or asynchronous clear
-        const result = this.storage.clearVerification();
-
-        // Only reload if in browser
-        if (typeof window !== 'undefined') {
-            // If result is a promise, wait for it then reload
-            if (result instanceof Promise) {
-                result.then(() => window.location.reload());
-            } else {
-                window.location.reload();
-            }
-        }
-    }
 }

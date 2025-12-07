@@ -18,7 +18,7 @@
 
     <div id="app"></div>
 
-    <p style="margin-top:2rem"><button onclick="AgeWallet.logout()">Logout</button></p>
+    <p style="margin-top:2rem"><button onclick="handleLogout()">Logout</button></p>
 
     <script type="module">
         import { AgeWallet } from '../../src/index.js';
@@ -36,6 +36,14 @@
                 token: '/.netlify/functions/proxy-token'
             }
         });
+
+        // --- Local Logout Logic (Exclusively for this example) ---
+        window.handleLogout = function() {
+            // 1. Clear Storage
+            aw.storage.clearVerification();
+            // 2. Refresh Page
+            window.location.reload();
+        };
 
         aw.init();
         window.AgeWallet = aw;
