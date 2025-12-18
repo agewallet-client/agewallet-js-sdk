@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branding Demo - Home</title>
+    <style>
+        /* --- SITE THEME (Underlying Page) --- */
+        body { font-family: 'Segoe UI', sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; background: #1a0510; color: #ff80ab; }
+        nav { background: #330e1d; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display: flex; gap: 15px; border: 1px solid #880e4f; }
+        nav a { text-decoration: none; color: #ff4081; font-weight: bold; text-transform: uppercase; }
+        .reset-btn { margin-left: auto; padding: 8px 15px; cursor: pointer; background: #880e4f; border: 1px solid #ff4081; color: #fff; }
+
+        /* --- AGEWALLET OVERRIDES --- */
+        /* We override the variables defined in Renderer.js */
+        :root {
+            /* Change the primary purple to Hot Pink */
+            --aw-purple: #e91e63 !important;
+            --aw-purple-700: #c2185b !important; /* Hover state */
+
+            /* Change the card background to Dark Maroon */
+            --aw-card: #2a0b16 !important;
+
+            /* Add a Pink Border */
+            --aw-card-border: #ff4081 !important;
+
+            /* Update text color */
+            --aw-text: #fce4ec !important;
+            --aw-muted: #f8bbd0 !important;
+        }
+
+        /* We can also target classes directly for things variables don't cover */
+        .aw-gate {
+            border-width: 2px !important;
+            box-shadow: 0 0 25px rgba(233, 30, 99, 0.5) !important;
+        }
+
+        /* Force the title to be Pink */
+        .aw-gate__title {
+            color: #ff4081 !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="shop/index.html">Shop</a>
+        <button id="reset-btn" class="reset-btn">Reset</button>
+    </nav>
+
+    <h1>🍬 Branding Demo</h1>
+    <p>We are overriding the SDK's internal CSS variables to force a <strong>Candy Theme</strong>.</p>
+
+    <div style="margin-top:20px; padding: 20px; border: 1px dashed #ff4081; border-radius: 8px;">
+        <strong>Status:</strong> <span id="status">Checking...</span>
+    </div>
+
+    <script type="module">
+        import { AgeWallet } from '../../../src/index.js';
+
+        const aw = new AgeWallet({
+            clientId: import.meta.env.VITE_AW_BRANDING_ID,
+            mode: 'overlay',
+            redirectUri: window.location.origin + '/',
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
+            },
+            // We can still use the SDK to change the TEXT,
+            // but the COLORS are now handled by the CSS above.
+            ui: {
+                title: '💖 CANDY CLUB',
+                description: 'You must be 18+ to enter the sweet shop.',
+                buttonText: 'I WANT CANDY'
+            }
+        });
+
+        document.getElementById('reset-btn').onclick = async () => {
+            if(confirm('Reset?')) {
+                await aw.storage.clearVerification();
+                window.location.reload();
+            }
+        };
+
+        aw.init().then(async () => {
+            const token = await aw.storage.getVerificationToken();
+            document.getElementById('status').innerText = token ? "VERIFIED ✅" : "UNVERIFIED ❌";
+        });
+    </script>
+</body>
+</html>

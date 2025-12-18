@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Branding Demo - About</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; background: #1a0510; color: #ff80ab; }
+        nav { background: #330e1d; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display: flex; gap: 15px; border: 1px solid #880e4f; }
+        nav a { text-decoration: none; color: #ff4081; font-weight: bold; text-transform: uppercase; }
+        .reset-btn { margin-left: auto; padding: 8px 15px; cursor: pointer; background: #880e4f; border: 1px solid #ff4081; color: #fff; }
+
+        /* --- CSS OVERRIDES --- */
+        :root {
+            --aw-purple: #e91e63 !important;
+            --aw-purple-700: #c2185b !important;
+            --aw-card: #2a0b16 !important;
+            --aw-card-border: #ff4081 !important;
+            --aw-text: #fce4ec !important;
+            --aw-muted: #f8bbd0 !important;
+        }
+        .aw-gate {
+            border-width: 2px !important;
+            box-shadow: 0 0 25px rgba(233, 30, 99, 0.5) !important;
+        }
+        .aw-gate__title { color: #ff4081 !important; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="shop/index.html">Shop</a>
+        <button id="reset-btn" class="reset-btn">Reset</button>
+    </nav>
+
+    <h1>ℹ️ About (Pink)</h1>
+    <p>This overlay is styled via CSS Variable Injection.</p>
+
+    <script type="module">
+        import { AgeWallet } from '../../../src/index.js';
+
+        const aw = new AgeWallet({
+            clientId: import.meta.env.VITE_AW_BRANDING_ID,
+            mode: 'overlay',
+            redirectUri: window.location.origin + '/',
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
+            },
+            ui: {
+                title: '💖 CANDY CLUB',
+                description: 'Restricted Area.',
+                buttonText: 'ENTER'
+            }
+        });
+
+        document.getElementById('reset-btn').onclick = async () => {
+            if(confirm('Reset?')) {
+                await aw.storage.clearVerification();
+                window.location.reload();
+            }
+        };
+
+        aw.init();
+    </script>
+</body>
+</html>

@@ -58,44 +58,50 @@ export class AgeWallet {
     async init() {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
+            let destination = null;
 
             // 1. Immediate UI Feedback for Redirects
-            // Only show loading if we have a code OR a relevant error
             if ((params.has('code') || params.has('error')) && this.config.render) {
                 const target = document.querySelector(this.config.targetSelector);
                 if (target) {
-                    // Show spinner instantly
                     this.renderer.renderLoading(target);
                 }
             }
 
             // 2. Perform Token Exchange or Error Handling
             if (params.has('code') && params.has('state')) {
-                await this.handleCallback(params.get('code'), params.get('state'));
-                window.history.replaceState({}, document.title, this.config.redirectUri);
+                // Returns the Deep Link (returnUrl) if successful
+                destination = await this.handleCallback(params.get('code'), params.get('state'));
             }
             else if (params.has('error') && params.has('state')) {
-                const handled = await this.handleError(
+                // Returns the Deep Link (returnUrl) if exemption granted
+                destination = await this.handleError(
                     params.get('error'),
                     params.get('error_description'),
                     params.get('state')
                 );
+            }
 
-                // Only clean URL if we successfully handled the "error" (e.g. it was an exemption)
-                if (handled) {
-                    window.history.replaceState({}, document.title, this.config.redirectUri);
-                }
+            // 3. Deep Link Restoration (Critical for Single Redirect URI Support)
+            // If we have a destination and it is NOT the current page, redirect the user back there.
+            if (destination && typeof destination === 'string' && destination !== window.location.href) {
+                window.location.href = destination;
+                return; // Stop execution here, browser is redirecting
+            }
+
+            // If we are staying on this page (or destination was null/invalid), clean the URL
+            if (destination) {
+                window.history.replaceState({}, document.title, this.config.redirectUri);
             }
         }
 
-        // 3. Cleanup Loading State before strategy execution
-        // (So OverlayStrategy doesn't see a spinner and think it's content)
+        // 4. Cleanup Loading State before strategy execution
         if (this.config.render) {
             const target = document.querySelector(this.config.targetSelector);
             if (target) this.renderer.clearGate(target);
         }
 
-        // 4. Execute Strategy
+        // 5. Execute Strategy
         if (this.config.mode === 'api') {
             const strategy = new ApiStrategy(this);
             await strategy.execute();
@@ -104,7 +110,7 @@ export class AgeWallet {
             await strategy.execute();
         }
 
-        // 5. Final Reveal (Removes anti-flicker style)
+        // 6. Final Reveal
         this.renderer.revealPage();
     }
 
@@ -114,12 +120,17 @@ export class AgeWallet {
         const verifier = this.security.generatePkceVerifier();
         const challenge = await this.security.generatePkceChallenge(verifier);
 
-        // Await storage set (important for Async/Redis storage in Node)
-        await this.storage.setOidcState(state, verifier, nonce, this.config.redirectUri);
+        // Capture Deep Link (User's current location)
+        // If in Node/Server mode, default to the redirectUri
+        const returnUrl = (typeof window !== 'undefined') ? window.location.href : this.config.redirectUri;
+
+        // Store Deep Link in State
+        await this.storage.setOidcState(state, verifier, nonce, returnUrl);
 
         const params = new URLSearchParams({
             response_type: 'code',
             client_id: this.config.clientId,
+            // STRICT: Must match the registered Redirect URI (e.g., Homepage)
             redirect_uri: this.config.redirectUri,
             scope: 'openid age',
             state: state,
@@ -135,18 +146,20 @@ export class AgeWallet {
     }
 
     async handleCallback(code, state) {
-        // Await storage get (important for Async/Redis storage in Node)
+        // Await storage get
         const stored = await this.storage.getOidcState();
 
         if (!stored || stored.state !== state) {
             console.error('[AgeWallet] Invalid state or session expired.');
-            return;
+            return null;
         }
 
         const body = {
             grant_type: 'authorization_code',
             client_id: this.config.clientId,
-            redirect_uri: stored.returnUrl || this.config.redirectUri,
+            // STRICT: Must match the registered Redirect URI used in generateAuthUrl
+            // Do NOT use stored.returnUrl here, that is for the browser redirect later
+            redirect_uri: this.config.redirectUri,
             code: code,
             code_verifier: stored.verifier
         };
@@ -166,17 +179,18 @@ export class AgeWallet {
             // Await storage set
             await this.storage.setVerification(tokenData);
 
+            // Return the deep link to the init() caller
+            return stored.returnUrl || this.config.redirectUri;
+
         } catch (e) {
             console.error('[AgeWallet] Token exchange failed:', e);
+            return null;
         }
     }
 
     /**
      * Handles OIDC Errors (specifically Regional Exemptions)
-     * @param {string} error - The error code (e.g. 'access_denied')
-     * @param {string} description - The error description
-     * @param {string} state - The CSRF state parameter
-     * @returns {Promise<boolean>} - True if error was handled as a success (exemption), False otherwise
+     * @returns {Promise<string|boolean>} - Returns Deep Link (string) if exemption granted, False otherwise
      */
     async handleError(error, description, state) {
         // 1. Validate State (CSRF Protection)
@@ -187,7 +201,6 @@ export class AgeWallet {
         }
 
         // 2. Check for Regional Exemption
-        // "access_denied" is the OIDC standard error, but the description confirms it's a geo-exemption
         if (error === 'access_denied' && description === 'Region does not require verification') {
             console.log('[AgeWallet] Regional exemption detected. Bypass granted.');
 
@@ -202,7 +215,9 @@ export class AgeWallet {
 
             // 4. Store as if it were a real token
             await this.storage.setVerification(syntheticToken);
-            return true;
+
+            // 5. Return Deep Link
+            return stored.returnUrl || this.config.redirectUri;
         }
 
         // 3. Log genuine errors

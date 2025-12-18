@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Overlay Demo - About</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        nav { background: #f4f4f5; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display: flex; align-items: center; gap: 15px; }
+        nav a { text-decoration: none; color: #333; font-weight: bold; }
+        nav a:hover { color: #000; text-decoration: underline; }
+        .spacer { flex-grow: 1; }
+        .reset-btn { padding: 8px 12px; cursor: pointer; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; color: #cf1322; font-size: 14px; font-weight: 600; }
+        .reset-btn:hover { background: #ffccc7; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="shop/index.html">Shop</a>
+        <div class="spacer"></div>
+        <button id="reset-btn" class="reset-btn">🔄 Reset / Clear Data</button>
+    </nav>
+
+    <h1>ℹ️ About Page</h1>
+    <p>If you visit this page directly (unverified), the SDK will:</p>
+    <ol>
+        <li>Save <code>/about.html</code> as your return destination.</li>
+        <li>Send you to AgeWallet (callback to Home).</li>
+        <li>Home will redirect you back here.</li>
+    </ol>
+
+    <script type="module">
+        import { AgeWallet } from '../../../src/index.js';
+
+        // --- RESET LOGIC ---
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(confirm('Clear all verification data and reload?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                document.cookie.split(";").forEach((c) => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+                window.location.reload();
+            }
+        });
+
+        const SITE_HUB = window.location.origin + '/';
+
+        const aw = new AgeWallet({
+            clientId: import.meta.env.VITE_AW_OVERLAY_ID,
+            mode: 'overlay',
+            redirectUri: SITE_HUB,
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
+            }
+        });
+
+        aw.init();
+    </script>
+</body>
+</html>

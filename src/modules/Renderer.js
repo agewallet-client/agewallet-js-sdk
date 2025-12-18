@@ -94,7 +94,7 @@ export class Renderer {
 
         const isFullPage = (target === document.body);
         const wrapperStyle = isFullPage
-            ? 'position: fixed; top: 0; left: 0; z-index: 999999; background-color: rgba(0,0,0,0.95);'
+            ? 'position: fixed; top: 0; left: 0; z-index: 999999; background-color: #000;'
             : 'position: absolute; top: 0; left: 0; background-color: #000; height: 100%;';
 
         const html = `

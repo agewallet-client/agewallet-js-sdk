@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Mode - Home</title>
+  <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        nav { background: #e6f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display:flex; gap:15px; align-items:center; }
+        nav a { text-decoration: none; color: #0050b3; font-weight: bold; }
+        .spacer { flex-grow: 1; }
+        .reset-btn { padding: 8px 12px; cursor: pointer; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; color: #cf1322; }
+
+        .content-area { display: none; padding: 20px; border: 1px solid #91d5ff; background: #e6f7ff; border-radius: 8px; margin-top: 20px; }
+        .error-area { display: none; padding: 20px; border: 1px solid #ffccc7; background: #fff2f0; color: #cf1322; border-radius: 8px; margin-top: 20px; }
+    </style>
+    <script>
+        document.documentElement.classList.add('aw-hiding');
+        setTimeout(() => document.documentElement.classList.remove('aw-hiding'), 3000);
+    </script>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="shop/index.html">Shop</a>
+        <div class="spacer"></div>
+        <button id="reset-btn" class="reset-btn">🔄 Reset</button>
+    </nav>
+
+    <h1>🏠 API Demo: Home</h1>
+    <p>Status: <span id="status-text">Verifying...</span></p>
+
+    <div id="secure-content" class="content-area"></div>
+    <div id="error-content" class="error-area"></div>
+
+    <script type="module">
+        import { AgeWallet } from '../../../src/index.js';
+
+        // --- FIXED RESET LOGIC ---
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(confirm('Reset?')) {
+                // 1. Clear Storage
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // 2. Clear Cookies (Specifically aw_verified)
+                document.cookie.split(";").forEach((c) => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+
+                // 3. Reload
+                window.location.reload();
+            }
+        });
+
+        const SITE_HUB = window.location.origin + '/';
+
+        const aw = new AgeWallet({
+            clientId: import.meta.env.VITE_AW_API_ID,
+            mode: 'overlay',
+            redirectUri: SITE_HUB,
+            endpoints: {
+                token: '/.netlify/functions/api-token',
+                userinfo: '/.netlify/functions/api-userinfo'
+            }
+        });
+
+        aw.init().then(async () => {
+            const token = await aw.storage.getVerificationToken();
+
+            if (!token) {
+                document.getElementById('status-text').innerText = "Not Verified (Gate should appear)";
+                return;
+            }
+
+            try {
+                const res = await fetch('/.netlify/functions/secure-data', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('status-text').innerText = "Verified & Unlocked";
+                    const content = document.getElementById('secure-content');
+                    content.style.display = 'block';
+                    content.innerHTML = `<h3>🔒 Secure API Content Loaded</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                const errBox = document.getElementById('error-content');
+                errBox.style.display = 'block';
+                errBox.innerText = `API Error: ${err.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

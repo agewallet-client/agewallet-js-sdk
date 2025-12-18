@@ -1,0 +1,2 @@
+# Rewrite ALL traffic to the backend function
+/* /.netlify/functions/redis-site  200

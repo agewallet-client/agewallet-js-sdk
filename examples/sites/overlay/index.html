@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay Demo - Home</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+        nav { background: #f4f4f5; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display: flex; align-items: center; gap: 15px; }
+        nav a { text-decoration: none; color: #333; font-weight: bold; }
+        nav a:hover { color: #000; text-decoration: underline; }
+        .spacer { flex-grow: 1; }
+        .reset-btn { padding: 8px 12px; cursor: pointer; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; color: #cf1322; font-size: 14px; font-weight: 600; }
+        .reset-btn:hover { background: #ffccc7; }
+        .status { padding: 10px; border: 1px solid #ccc; background: #fff; margin-top: 1rem; display: inline-block; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home (Hub)</a>
+        <a href="about.html">About Page</a>
+        <a href="shop/index.html">Shop Deep Link</a>
+        <div class="spacer"></div>
+        <button id="reset-btn" class="reset-btn">🔄 Reset / Clear Data</button>
+    </nav>
+
+    <h1>🏠 Overlay Demo: Homepage</h1>
+    <p>This page acts as the <strong>Redirect Hub</strong>.</p>
+    <p>AgeWallet is configured to ALWAYS redirect back here (The Site Root).</p>
+
+    <div class="status">
+        <strong>Current Page:</strong> /index.html
+    </div>
+
+    <script type="module">
+        import { AgeWallet } from '../../../src/index.js';
+
+        // --- RESET LOGIC ---
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(confirm('Clear all verification data and reload?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                // Clear all cookies
+                document.cookie.split(";").forEach((c) => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+                window.location.reload();
+            }
+        });
+
+        // --- AGEWALLET INIT ---
+        const SITE_HUB = window.location.origin + '/';
+
+        const aw = new AgeWallet({
+            clientId: import.meta.env.VITE_AW_OVERLAY_ID,
+            mode: 'overlay',
+            redirectUri: SITE_HUB,
+            endpoints: {
+                token: '/.netlify/functions/proxy-token'
+            }
+        });
+
+        aw.init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Mode - About</title>
+   <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        nav { background: #e6f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display:flex; gap:15px; align-items:center; }
+        nav a { text-decoration: none; color: #0050b3; font-weight: bold; }
+        .spacer { flex-grow: 1; }
+        .reset-btn { padding: 8px 12px; cursor: pointer; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; color: #cf1322; }
+
+        .content-area { display: none; padding: 20px; border: 1px solid #91d5ff; background: #e6f7ff; border-radius: 8px; margin-top: 20px; }
+        .error-area { display: none; padding: 20px; border: 1px solid #ffccc7; background: #fff2f0; color: #cf1322; border-radius: 8px; margin-top: 20px; }
+    </style>
+  <script type="module" crossorigin src="./assets/about-axIH5fBF.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/index-oaKO7Rje.js">
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="shop/index.html">Shop</a>
+        <div class="spacer"></div>
+        <button id="reset-btn" class="reset-btn">🔄 Reset</button>
+    </nav>
+
+    <h1>ℹ️ API Demo: About</h1>
+    <p>This page should only show data if the API approves the token.</p>
+    <div id="secure-content" class="content-area"></div>
+    <div id="error-content" class="error-area"></div>
+
+</body>
+</html>

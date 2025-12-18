@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Headless Mode - About</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #0d0d0d; color: #00ff00; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        nav { border-bottom: 1px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; display: flex; gap: 20px; align-items: center; }
+        nav a { color: #fff; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
+        nav a:hover { color: #00ff00; text-decoration: underline; }
+        .reset-btn { background: transparent; color: #ff3333; border: 1px solid #ff3333; font-size: 0.8rem; padding: 8px 16px; margin-left: auto; cursor: pointer; }
+        .btn { background: #00ff00; color: #000; padding: 12px 24px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .btn:hover { background: #fff; }
+        .panel { border: 1px solid #333; background: #111; padding: 30px; margin-top: 20px; display: none; }
+        .visible { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="shop/index.html">Shop</a>
+        <button id="reset-btn" class="reset-btn">System Reset</button>
+    </nav>
+
+    <h1>ℹ️ ABOUT US</h1>
+
+    <div id="ui-gate" class="panel">
+        <h3 style="color: #fff">⛔ VERIFICATION REQUIRED</h3>
+        <p>Please verify your age to access this site.</p>
+        <button id="verify-btn" class="btn">VERIFY WITH AGEWALLET</button>
+    </div>
+
+    <div id="ui-content" class="panel">
+        <h3 style="color: #fff">SECURE CONTENT UNLOCKED</h3>
+        <p>This is the protected About page.</p>
+        <p>Because you are verified, you can read this secret history of our company.</p>
+    </div>
+
+    <script type="module">
+        import { AgeWallet } from '../../../src/index.js';
+
+        const ROOT_URI = 'https://aw-headless.netlify.app/';
+
+        const aw = new AgeWallet({
+            clientId: import.meta.env.VITE_AW_HEADLESS_ID,
+            mode: 'overlay',
+            render: false,
+            redirectUri: ROOT_URI,
+            endpoints: {
+                token: '/.netlify/functions/headless-token',
+                userinfo: '/.netlify/functions/headless-userinfo'
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+             if(confirm('Purge all session data?')) {
+                localStorage.clear(); sessionStorage.clear();
+                document.cookie.split(";").forEach((c) => document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"));
+                window.location.reload();
+            }
+        });
+
+        document.getElementById('verify-btn').addEventListener('click', async () => {
+            const auth = await aw.generateAuthUrl();
+            window.location.href = auth.url;
+        });
+
+        aw.init().then(async () => {
+            const token = await aw.storage.getVerificationToken();
+            if (token) {
+                document.getElementById('ui-content').classList.add('visible');
+            } else {
+                document.getElementById('ui-gate').classList.add('visible');
+            }
+        });
+    </script>
+</body>
+</html>
