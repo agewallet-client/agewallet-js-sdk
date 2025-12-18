@@ -47,10 +47,16 @@ The fastest way to protect a landing page. This renders a fixed-position age gat
         clientId: 'YOUR_CLIENT_ID',
         clientSecret: 'YOUR_CLIENT_SECRET', // Only required for Confidential Clients
         mode: 'overlay',
-        redirectUri: window.location.href.split('?')[0] // Redirect back to the same page
+        redirectUri: window.location.origin + '/' // Single callback URL (see note below)
     });
 
     aw.init();
+
+### ⚠️ Important: Single Redirect URI
+
+AgeWallet requires **one redirect URI per Client ID**. All pages on your site must use the same `redirectUri` value (typically your homepage or a dedicated `/callback` route).
+
+The SDK automatically handles deep linking — if a user lands on `/shop/product-123` and needs to verify, they will be returned to `/shop/product-123` after verification, even though the OAuth callback goes through your single redirect URI.
 
 ## Configuration
 
@@ -58,7 +64,7 @@ The fastest way to protect a landing page. This renders a fixed-position age gat
 | :--- | :--- | :--- | :--- |
 | `clientId` | `string` | **Required** | Your AgeWallet Application ID. |
 | `clientSecret` | `string` | `''` | Required for Confidential Clients. Leave empty for Public Clients (SPA). |
-| `redirectUri` | `string` | `window.location` | The URL users return to after verification. Must be whitelisted in Dashboard. |
+| `redirectUri` | `string` | `window.location` | The single OAuth callback URL (e.g., `window.location.origin + '/'`). Must be whitelisted in Dashboard. One per Client ID. |
 | `mode` | `string` | `'overlay'` | `'overlay'` (Default) or `'api'` (Secure Fetch). |
 | `render` | `boolean` | `true` | Set to `false` for Headless Mode (no UI injected). |
 | `storage` | `string` \| `object` | `'cookie'` | `'cookie'`, `'local'`, or a custom object implementing `SessionHandlerInterface`. |
@@ -192,16 +198,19 @@ The token string will be: `'region_exempt_placeholder'`
 
 ## Examples & Recipes
 
-This repository includes a robust set of code recipes in the `examples/` directory.
+This repository includes complete multi-page example sites in the `examples/` directory, demonstrating real-world integration patterns with deep link support.
 
-### Frontend Recipes
+### Frontend Examples
 
-- **[Overlay Mode](examples/frontend/overlay-mode.html):** The standard full-screen gate integration.
-- **[API Mode](examples/frontend/secure-api-fetch.html):** Securely fetching content from a backend only after verification.
-- **[Headless Mode](examples/frontend/custom-ui-headless.html):** Building a completely custom UI (React/Vue style) without the SDK's default styling.
-- **[Local Storage](examples/frontend/spa-local-storage.html):** Persisting tokens in `localStorage` for Single Page Apps.
-- **[Custom Branding](examples/frontend/branding-options.html):** Customizing the default gate's logo, text, and colors.
+Each example is a 3-page mini-site (Home, About, Shop) demonstrating how verification persists across pages and deep links.
 
-### Backend Recipes
+- **[Overlay Mode](examples/sites/overlay/):** The standard full-screen gate integration with deep link preservation.
+- **[API Mode](examples/sites/api/):** Securely fetching content from a backend only after verification.
+- **[Headless Mode](examples/sites/headless/):** Building a completely custom UI (React/Vue style) without the SDK's default styling.
+- **[Local Storage](examples/sites/local/):** Persisting tokens in `localStorage` for Single Page Apps.
+- **[Custom Branding](examples/sites/branding/):** Customizing the default gate's logo, text, and colors via CSS variable overrides.
 
-- **[SSR + Redis](examples/frontend/ssr-redis-session.html):** A Node.js example using Redis to handle verification sessions server-side.
+### Backend Examples
+
+- **[SSR + Redis](examples/sites/redis/):** A fully server-rendered Node.js example using Upstash Redis for session management. Demonstrates deep link restoration entirely on the server.
+- **[Netlify Functions](examples/backend/netlify-functions/):** Serverless token proxy functions for secure client secret handling.
