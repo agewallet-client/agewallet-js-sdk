@@ -7,13 +7,10 @@ export default defineConfig({
     emptyOutDir: false,
     sourcemap: true,
     lib: {
-      entry: resolve(__dirname, 'src/index.js'),
+      entry: resolve(__dirname, 'src/browser.js'),
       name: 'AgeWallet',
-      formats: ['es', 'umd'],
-      fileName: (format) => {
-        if (format === 'umd') return 'agewallet.umd.cjs';
-        return 'agewallet.js';
-      }
+      formats: ['iife'],
+      fileName: () => 'agewallet.min.js'
     }
   }
 });

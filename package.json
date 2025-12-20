@@ -28,7 +28,7 @@
     "test:watch": "vitest",
     "dev": "vite examples/frontend",
     "build:demo": "vite build",
-    "build:lib": "vite build --config vite.lib.config.js",
+    "build:lib": "vite build --config vite.lib.config.js && vite build --config vite.browser.config.js",
     "build": "npm run build:demo && npm run build:lib"
   },
   "devDependencies": {
