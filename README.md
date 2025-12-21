@@ -31,7 +31,7 @@ Designed for versatility, it supports everything from static landing pages to Si
 
 ### Option 2: CDN (Browser Script)
 
-    <script src="https://unpkg.com/@agewallet/js-sdk@latest/dist/agewallet.umd.cjs"></script>
+    <script src="https://unpkg.com/@agewallet/js-sdk@latest/dist/agewallet.min.js"></script>
     <script>
       // Access via global window.AgeWallet
       const aw = new AgeWallet({ ... });
