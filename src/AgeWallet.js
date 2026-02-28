@@ -90,7 +90,7 @@ export class AgeWallet {
             }
 
             // If we are staying on this page (or destination was null/invalid), clean the URL
-            if (destination) {
+            if (destination || params.has('error')) {
                 window.history.replaceState({}, document.title, this.config.redirectUri);
             }
         }
@@ -189,8 +189,8 @@ export class AgeWallet {
     }
 
     /**
-     * Handles OIDC Errors (specifically Regional Exemptions)
-     * @returns {Promise<string|boolean>} - Returns Deep Link (string) if exemption granted, False otherwise
+     * Handles OIDC Errors
+     * @returns {Promise<boolean>} - Always returns false; gate will re-show
      */
     async handleError(error, description, state) {
         // 1. Validate State (CSRF Protection)
@@ -200,27 +200,7 @@ export class AgeWallet {
             return false;
         }
 
-        // 2. Check for Regional Exemption
-        if (error === 'access_denied' && description === 'Region does not require verification') {
-            console.log('[AgeWallet] Regional exemption detected. Bypass granted.');
-
-            // 3. Create Synthetic Token (24h validity)
-            const syntheticToken = {
-                access_token: 'region_exempt_placeholder',
-                token_type: 'Bearer',
-                expires_in: 86400,
-                scope: 'openid age',
-                is_synthetic: true
-            };
-
-            // 4. Store as if it were a real token
-            await this.storage.setVerification(syntheticToken);
-
-            // 5. Return Deep Link
-            return stored.returnUrl || this.config.redirectUri;
-        }
-
-        // 3. Log genuine errors
+        // 2. Log genuine errors
         console.error(`[AgeWallet] OIDC Error: ${error} - ${description}`);
         return false;
     }

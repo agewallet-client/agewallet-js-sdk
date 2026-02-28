@@ -162,14 +162,11 @@ The SDK works natively in Node.js (v19+) for server-side rendering (SSR) or API 
     const authData = await aw.generateAuthUrl();
     // Redirect user to: authData.url
 
-    // 3. Handle Callback OR Exemption
+    // 3. Handle Callback
     // Call this when the user returns to your callback URL.
-    // It might contain ?code=... (Verification) OR ?error=... (Exemption)
+    // It might contain ?code=... (Verification) OR ?error=... (Failure)
 
-    if (req.query.error) {
-        // Handle Regional Exemption (e.g. "Region does not require verification")
-        await aw.handleError(req.query.error, req.query.error_description, req.query.state);
-    } else if (req.query.code) {
+    if (req.query.code) {
         // Handle Standard Verification
         await aw.handleCallback(req.query.code, req.query.state);
     }
@@ -178,22 +175,7 @@ The SDK works natively in Node.js (v19+) for server-side rendering (SSR) or API 
     const token = await aw.storage.getVerificationToken();
 
     if (token) {
-       // User is verified (or exempt)
-    }
-
-### ⚠️ Important: Regional Exemptions & API Mode
-
- If a user visits from an exempt region (e.g., a jurisdiction where verification is not legally required), the SDK will generate a **Synthetic Token** to grant access without an ID scan.
-
-The token string will be: `'region_exempt_placeholder'`
-
- **If you are validating tokens on your backend:** You must check for this specific string *before* calling the AgeWallet UserInfo endpoint. Sending this placeholder to the AgeWallet API will result in a `401 Unauthorized` error.
-
- **Example Backend Check:**
-
-    if (token === 'region_exempt_placeholder') {
-        // Allow access (Regional Exemption)
-        return serveContent();
+       // User is verified
     }
 
 ## Examples & Recipes
