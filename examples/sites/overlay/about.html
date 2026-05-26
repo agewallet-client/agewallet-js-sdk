@@ -30,6 +30,8 @@
         <li>Home will redirect you back here.</li>
     </ol>
 
+    <div id="aw-status" style="margin-top: 1rem; padding: 10px 14px; background: #f0fff4; border: 1px solid #4caf50; border-radius: 6px; display: none;"></div>
+
     <script type="module">
         import { AgeWallet } from '../../../src/index.js';
 
@@ -51,8 +53,14 @@
             clientId: import.meta.env.VITE_AW_OVERLAY_ID,
             mode: 'overlay',
             redirectUri: SITE_HUB,
+            metadata: 'page:overlay-about',
             endpoints: {
                 token: '/.netlify/functions/proxy-token'
+            },
+            onVerified: (content, info) => {
+                const el = document.getElementById('aw-status');
+                el.textContent = '✓ Verified — metadata: ' + (info?.metadata ?? '(none)');
+                el.style.display = 'inline-block';
             }
         });
 

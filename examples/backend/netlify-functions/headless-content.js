@@ -8,7 +8,7 @@ exports.handler = async function(event, context) {
     // 1. Verify Token with AgeWallet UserInfo
     const isValid = await new Promise((resolve) => {
         const req = https.request({
-            hostname: 'app.agewallet.io',
+            hostname: process.env.AW_API_HOST || 'app.agewallet.io',
             path: '/user/userinfo',
             method: 'GET',
             headers: { 'Authorization': authHeader }

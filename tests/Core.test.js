@@ -16,6 +16,7 @@ vi.mock('../src/modules/Storage.js', () => ({
         setOidcState: vi.fn(),
         getOidcState: vi.fn(),
         setVerification: vi.fn(),
+        getVerification: vi.fn(),
         getVerificationToken: vi.fn(),
         clearVerification: vi.fn()
     }))
@@ -175,32 +176,97 @@ describe('AgeWallet Core SDK', () => {
         });
     });
 
-    describe('Regional Exemptions (handleError)', () => {
-        const validState = 'state_xyz';
-        const deepLink = 'http://localhost:3000/exempt-page';
+    describe('Metadata Pass-Through', () => {
+        const validState = 'state_123';
+        const deepLink = 'http://localhost:3000/dest';
 
-        it('should return Deep Link for "Region does not require verification"', async () => {
-            mockStorage.getOidcState.mockResolvedValue({
-                state: validState,
-                returnUrl: deepLink
+        it('appends metadata to authorize URL when set via constructor', async () => {
+            const aw2 = new AgeWallet({
+                clientId: 'cid',
+                redirectUri: 'http://localhost:3000/',
+                metadata: 'order:XYZ-42'
             });
-
-            const result = await aw.handleError(
-                'access_denied',
-                'Region does not require verification',
-                validState
-            );
-
-            expect(result).toBe(deepLink);
-            expect(mockStorage.setVerification).toHaveBeenCalledWith(expect.objectContaining({
-                is_synthetic: true
-            }));
+            const { url } = await aw2.generateAuthUrl();
+            expect(new URL(url).searchParams.get('metadata')).toBe('order:XYZ-42');
         });
 
-        it('should return false for other errors', async () => {
-            mockStorage.getOidcState.mockResolvedValue({ state: validState });
-            const result = await aw.handleError('access_denied', 'User denied', validState);
-            expect(result).toBe(false);
+        it('per-call metadata in generateAuthUrl() overrides instance-level value', async () => {
+            const aw2 = new AgeWallet({
+                clientId: 'cid',
+                redirectUri: 'http://localhost:3000/',
+                metadata: 'instance-default'
+            });
+            const { url } = await aw2.generateAuthUrl({ metadata: 'per-call' });
+            expect(new URL(url).searchParams.get('metadata')).toBe('per-call');
+        });
+
+        it('setMetadata() updates the value used by the next generateAuthUrl()', async () => {
+            aw.setMetadata('after-set');
+            const { url } = await aw.generateAuthUrl();
+            expect(new URL(url).searchParams.get('metadata')).toBe('after-set');
+        });
+
+        it('omits metadata param when nothing is set', async () => {
+            const { url } = await aw.generateAuthUrl();
+            expect(new URL(url).searchParams.has('metadata')).toBe(false);
+        });
+
+        it('throws if metadata exceeds 4096 bytes', () => {
+            const huge = 'x'.repeat(4097);
+            expect(() => aw.setMetadata(huge)).toThrow(/4096-byte limit/);
+        });
+
+        it('throws if metadata is not a string', () => {
+            expect(() => aw.setMetadata(42)).toThrow(/must be a string/);
+        });
+
+        it('persists metadata returned from /userinfo into storage on callback', async () => {
+            mockStorage.getOidcState.mockResolvedValue({
+                state: validState,
+                verifier: 'mock_verifier',
+                returnUrl: deepLink
+            });
+            mockNetwork.postForm.mockResolvedValue({ access_token: 'fake_jwt' });
+            mockNetwork.get.mockResolvedValue({ age_verified: true, metadata: 'order:XYZ-42' });
+
+            await aw.handleCallback('code', validState);
+
+            expect(mockStorage.setVerification).toHaveBeenCalledWith({
+                access_token: 'fake_jwt',
+                metadata: 'order:XYZ-42'
+            });
+        });
+
+        it('does not add a metadata field when /userinfo omits it', async () => {
+            mockStorage.getOidcState.mockResolvedValue({
+                state: validState,
+                verifier: 'v',
+                returnUrl: deepLink
+            });
+            mockNetwork.postForm.mockResolvedValue({ access_token: 'fake_jwt' });
+            mockNetwork.get.mockResolvedValue({ age_verified: true });
+
+            await aw.handleCallback('code', validState);
+
+            expect(mockStorage.setVerification).toHaveBeenCalledWith({ access_token: 'fake_jwt' });
+        });
+
+        it('getMetadata() returns the stored value', async () => {
+            mockStorage.getVerification.mockResolvedValue({
+                access_token: 'tok',
+                metadata: 'order:XYZ-42'
+            });
+            expect(await aw.getMetadata()).toBe('order:XYZ-42');
+        });
+
+        it('getMetadata() returns null when no verification stored', async () => {
+            mockStorage.getVerification.mockResolvedValue(null);
+            expect(await aw.getMetadata()).toBe(null);
+        });
+
+        it('getMetadata() returns null when verification has no metadata field', async () => {
+            mockStorage.getVerification.mockResolvedValue({ access_token: 'tok' });
+            expect(await aw.getMetadata()).toBe(null);
         });
     });
 

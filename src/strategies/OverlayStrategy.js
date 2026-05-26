@@ -11,14 +11,20 @@ export class OverlayStrategy {
 
     async execute() {
         // Must await storage retrieval
-        const token = await this.core.storage.getVerificationToken();
+        const data = await this.core.storage.getVerification();
+        const token = data ? data.access_token : null;
 
         // 1. User is Verified
         if (token) {
             // Overlay mode: We just do nothing and let the content show.
             // Headless mode: We inform the app the user is verified.
             if (!this.core.config.render && this.core.config.onVerified) {
-                this.core.config.onVerified(null); // No content to pass in overlay mode
+                const info = {
+                    metadata: data.metadata ?? null,
+                    expiresAt: data.expiry_timestamp ?? null,
+                    hasToken: true
+                };
+                this.core.config.onVerified(null, info); // No content to pass in overlay mode
             }
             return;
         }

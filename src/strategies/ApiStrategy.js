@@ -10,7 +10,8 @@ export class ApiStrategy {
     }
 
     async execute() {
-        const token = await this.core.storage.getVerificationToken();
+        const data = await this.core.storage.getVerification();
+        const token = data ? data.access_token : null;
         const target = document.querySelector(this.core.config.targetSelector);
 
         // Safety check for Render Mode
@@ -42,7 +43,12 @@ export class ApiStrategy {
                 } else {
                     // Pass data to App
                     if (this.core.config.onVerified) {
-                        this.core.config.onVerified(content);
+                        const info = {
+                            metadata: data.metadata ?? null,
+                            expiresAt: data.expiry_timestamp ?? null,
+                            hasToken: true
+                        };
+                        this.core.config.onVerified(content, info);
                     }
                 }
 

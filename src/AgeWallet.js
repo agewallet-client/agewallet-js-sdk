@@ -31,6 +31,7 @@ export class AgeWallet {
             storage: 'cookie',
             ui: {},
             api: {},
+            metadata: null, // Optional opaque per-verification string (max 4096 bytes)
             ...config,
             endpoints: {
                 ...defaultEndpoints,
@@ -40,6 +41,10 @@ export class AgeWallet {
 
         if (!this.config.clientId) {
             throw new Error('[AgeWallet] Missing clientId.');
+        }
+
+        if (this.config.metadata !== null && this.config.metadata !== undefined) {
+            this._validateMetadata(this.config.metadata);
         }
 
         // Initialize Security with environment flag
@@ -114,7 +119,7 @@ export class AgeWallet {
         this.renderer.revealPage();
     }
 
-    async generateAuthUrl() {
+    async generateAuthUrl(options = {}) {
         const state = this.security.generateRandomString(16);
         const nonce = this.security.generateRandomString(16);
         const verifier = this.security.generatePkceVerifier();
@@ -126,6 +131,12 @@ export class AgeWallet {
 
         // Store Deep Link in State
         await this.storage.setOidcState(state, verifier, nonce, returnUrl);
+
+        // Resolve metadata: per-call option > instance config
+        const metadata = (options.metadata !== undefined) ? options.metadata : this.config.metadata;
+        if (metadata !== null && metadata !== undefined) {
+            this._validateMetadata(metadata);
+        }
 
         const params = new URLSearchParams({
             response_type: 'code',
@@ -139,10 +150,44 @@ export class AgeWallet {
             nonce: nonce
         });
 
+        if (metadata) {
+            params.append('metadata', metadata);
+        }
+
         return {
             url: `${this.config.endpoints.auth}?${params.toString()}`,
             state: state
         };
+    }
+
+    /**
+     * Update the metadata that will be attached to the next verification.
+     * Useful for overlay mode where the SDK builds its own button (the integrator
+     * can't intercept the click, so they update metadata ahead of time).
+     */
+    setMetadata(value) {
+        if (value !== null && value !== undefined) {
+            this._validateMetadata(value);
+        }
+        this.config.metadata = value;
+    }
+
+    /**
+     * Return the metadata string returned with the current verification, or null
+     * if no metadata was attached or there is no active verification.
+     */
+    async getMetadata() {
+        const data = await this.storage.getVerification();
+        return data ? (data.metadata ?? null) : null;
+    }
+
+    _validateMetadata(value) {
+        if (typeof value !== 'string') {
+            throw new Error('[AgeWallet] metadata must be a string.');
+        }
+        if (value.length > 4096) {
+            throw new Error('[AgeWallet] metadata exceeds 4096-byte limit.');
+        }
     }
 
     async handleCallback(code, state) {
@@ -176,8 +221,13 @@ export class AgeWallet {
                 throw new Error('Age requirement not met.');
             }
 
+            // Persist any metadata that round-tripped through AgeWallet alongside the token
+            const verificationData = (userInfo.metadata !== undefined && userInfo.metadata !== null)
+                ? { ...tokenData, metadata: userInfo.metadata }
+                : tokenData;
+
             // Await storage set
-            await this.storage.setVerification(tokenData);
+            await this.storage.setVerification(verificationData);
 
             // Return the deep link to the init() caller
             return stored.returnUrl || this.config.redirectUri;

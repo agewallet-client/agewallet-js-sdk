@@ -31,7 +31,7 @@ exports.handler = async function(event, context) {
         // 4. Forward to AgeWallet
         return new Promise((resolve, reject) => {
             const options = {
-                hostname: 'app.agewallet.io',
+                hostname: process.env.AW_API_HOST || 'app.agewallet.io',
                 path: '/user/token',
                 method: 'POST',
                 headers: {

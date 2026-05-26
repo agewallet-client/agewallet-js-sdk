@@ -27,6 +27,7 @@
 
     <h1>💀 Headless Mode</h1>
     <p>Status: <span id="status-text">INITIALIZING...</span></p>
+    <p>Page metadata: <span id="page-meta-tag">page:headless-home</span></p>
 
     <div id="ui-gate" class="panel">
         <h3 style="color: #fff">⛔ VERIFICATION REQUIRED</h3>
@@ -37,13 +38,14 @@
     <div id="ui-content" class="panel">
         <h3 style="color: #fff">✅ IDENTITY CONFIRMED</h3>
         <p>Welcome back, User.</p>
+        <p>Last verification metadata: <code id="last-meta">(none)</code></p>
         <div id="api-data">Loading secure data...</div>
     </div>
 
     <script type="module">
         import { AgeWallet } from '../../../src/index.js';
 
-        const ROOT_URI = 'https://aw-headless.netlify.app/';
+        const ROOT_URI = window.location.origin + '/';
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_HEADLESS_ID,
@@ -65,7 +67,8 @@
         });
 
         document.getElementById('verify-btn').addEventListener('click', async () => {
-            const auth = await aw.generateAuthUrl();
+            // Attach a per-page metadata value so we can confirm the round-trip
+            const auth = await aw.generateAuthUrl({ metadata: 'page:headless-home' });
             window.location.href = auth.url;
         });
 
@@ -76,6 +79,8 @@
             if (token) {
                 document.getElementById('status-text').innerText = "VERIFIED";
                 document.getElementById('ui-content').classList.add('visible');
+                const md = await aw.getMetadata();
+                document.getElementById('last-meta').innerText = md ?? '(none)';
                 try {
                     const res = await fetch('/.netlify/functions/headless-content', { headers: { 'Authorization': `Bearer ${token}` } });
                     const data = await res.json();

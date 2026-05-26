@@ -41,13 +41,14 @@ export class Storage {
     }
 
     /**
-     * Get Verification Token
-     * @returns {string|null} Access Token
+     * Get the full stored verification data (token + metadata + expiry, etc.),
+     * or null if absent / expired / parse failure.
+     * @returns {object|null}
      */
-    async getVerificationToken() {
+    async getVerification() {
         if (this.handler) {
             const data = await this.handler.get(`${this.prefix}verified`);
-            return data ? data.access_token : null;
+            return data || null;
         }
 
         let raw = null;
@@ -71,11 +72,20 @@ export class Storage {
                 this.clearVerification();
                 return null;
             }
-            return data.access_token;
+            return data;
         } catch (e) {
             this.clearVerification();
             return null;
         }
+    }
+
+    /**
+     * Get Verification Token
+     * @returns {string|null} Access Token
+     */
+    async getVerificationToken() {
+        const data = await this.getVerification();
+        return data ? data.access_token : null;
     }
 
     async clearVerification() {

@@ -9,7 +9,7 @@ exports.handler = async function(event, context) {
 
     return new Promise((resolve, reject) => {
         const req = https.request({
-            hostname: 'app.agewallet.io',
+            hostname: process.env.AW_API_HOST || 'app.agewallet.io',
             path: '/user/userinfo',
             method: 'GET',
             headers: {

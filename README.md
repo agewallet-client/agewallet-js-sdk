@@ -72,8 +72,9 @@ The SDK automatically handles deep linking — if a user lands on `/shop/product
 | `api` | `object` | `{}` | Required for `api` mode. Must contain an `endpoint` URL. |
 | `environment` | `string` | `'browser'` | `'browser'` (Default) or `'node'` (Server-Side). |
 | `ui` | `object` | `{}` | Customize text and logo (see below). |
-| `onVerified` | `function` | `null` | Callback fired when verification succeeds. Receives content (API mode) or null (Overlay mode). |
+| `onVerified` | `function` | `null` | Callback fired when verification succeeds. Receives `(content, info)`: content is API-mode data or `null` for overlay; `info` is `{metadata, expiresAt, hasToken}`. |
 | `onUnverified` | `function` | `null` | Callback fired when verification is required. Receives the `authUrl` string. |
+| `metadata` | `string` | `null` | Optional opaque per-verification string (max 4096 bytes) sent with the next auth request and round-tripped back. See [Metadata Pass-Through](#metadata-pass-through). |
 
 ## Advanced Usage
 
@@ -132,6 +133,52 @@ You can customize the look and feel of the built-in age gate by passing a `ui` o
     .aw-gate__btn--yes {
         background-color: #ff0055 !important;
     }
+
+## Metadata Pass-Through
+
+Attach an arbitrary opaque string (max 4096 bytes) — for example an order ID, customer ID, or any other reference — to a verification request. AgeWallet stores it server-side and returns it to the SDK, where you can read it back via `getMetadata()` or the `onVerified(content, info)` callback.
+
+### Three ways to set metadata
+
+    // 1. Constructor (initial / static value)
+    const aw = new AgeWallet({
+        clientId: 'YOUR_ID',
+        redirectUri: 'https://mysite.com/',
+        metadata: 'site:winery1'
+    });
+
+    // 2. Runtime setter (overlay mode — update before next button click)
+    aw.setMetadata('order:' + currentOrderId);
+
+    // 3. Per-call (headless mode — override at the moment you build the auth URL)
+    const { url } = await aw.generateAuthUrl({ metadata: 'order:XYZ-42' });
+    window.location.href = url;
+
+Precedence: per-call option > runtime setter > constructor value.
+
+### Reading metadata back
+
+Two equivalent ways:
+
+    // (a) Method — call any time after init()
+    const value = await aw.getMetadata();   // 'order:XYZ-42' or null
+
+    // (b) onVerified callback (headless mode) — second arg
+    const aw = new AgeWallet({
+        clientId, redirectUri, render: false,
+        onVerified: (content, info) => {
+            console.log(info.metadata);     // 'order:XYZ-42'
+            console.log(info.expiresAt);    // ms timestamp
+        }
+    });
+
+The value comes from the server's signed `/user/userinfo` response, persisted alongside the access token. It survives page navigations the same way the verification itself does (via cookie or `localStorage`, per your `storage` option).
+
+### Notes
+
+- Sending more than 4096 bytes throws `Error('[AgeWallet] metadata exceeds 4096-byte limit.')` — fail-fast at the SDK before hitting the server.
+- Metadata is **optional**. If you don't set it, the existing flow is unchanged — `getMetadata()` returns `null` and `onVerified`'s `info.metadata` is `null`.
+- `info` second arg to `onVerified` is additive — existing single-arg callbacks (`(content) => ...`) keep working.
 
 ## Server-Side Verification (Node.js)
 

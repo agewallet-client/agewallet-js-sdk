@@ -36,12 +36,13 @@
         <h3 style="color: #fff">SECURE CONTENT UNLOCKED</h3>
         <p>This is the protected About page.</p>
         <p>Because you are verified, you can read this secret history of our company.</p>
+        <p>Last verification metadata: <code id="last-meta">(none)</code></p>
     </div>
 
     <script type="module">
         import { AgeWallet } from '../../../src/index.js';
 
-        const ROOT_URI = 'https://aw-headless.netlify.app/';
+        const ROOT_URI = window.location.origin + '/';
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_HEADLESS_ID,
@@ -63,7 +64,7 @@
         });
 
         document.getElementById('verify-btn').addEventListener('click', async () => {
-            const auth = await aw.generateAuthUrl();
+            const auth = await aw.generateAuthUrl({ metadata: 'page:headless-about' });
             window.location.href = auth.url;
         });
 
@@ -71,6 +72,8 @@
             const token = await aw.storage.getVerificationToken();
             if (token) {
                 document.getElementById('ui-content').classList.add('visible');
+                const md = await aw.getMetadata();
+                document.getElementById('last-meta').innerText = md ?? '(none)';
             } else {
                 document.getElementById('ui-gate').classList.add('visible');
             }
