@@ -27,7 +27,7 @@
 
     <h1>💀 Headless Mode</h1>
     <p>Status: <span id="status-text">INITIALIZING...</span></p>
-    <p>Page metadata: <span id="page-meta-tag">page:headless-home</span></p>
+    <p>Will send metadata: <code id="page-meta-tag">(computing…)</code></p>
 
     <div id="ui-gate" class="panel">
         <h3 style="color: #fff">⛔ VERIFICATION REQUIRED</h3>
@@ -45,7 +45,7 @@
     <script type="module">
         import { AgeWallet } from '../../../src/index.js';
 
-        const ROOT_URI = window.location.origin + '/';
+        const ROOT_URI = window.location.origin;
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_HEADLESS_ID,
@@ -66,14 +66,25 @@
             }
         });
 
+        // Distinctive per-page-load test payload so we can trace the round-trip on the backend
+        const _ts = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+        const TEST_METADATA = `aw-test:js-sdk-headless:${_ts}`;
+        document.getElementById('page-meta-tag').innerText = TEST_METADATA;
+
         document.getElementById('verify-btn').addEventListener('click', async () => {
-            // Attach a per-page metadata value so we can confirm the round-trip
-            const auth = await aw.generateAuthUrl({ metadata: 'page:headless-home' });
+            const auth = await aw.generateAuthUrl({ metadata: TEST_METADATA });
             window.location.href = auth.url;
         });
 
         async function run() {
+            // If we landed here with ?code, init() will exchange it and redirect to the clean URL.
+            // Don't continue past init() in that case — let the post-redirect page-load handle the
+            // rest (otherwise we'd fire the secure-content fetch twice: once before the redirect,
+            // once after, doubling the api.call billing for no benefit).
+            const isCallback = new URLSearchParams(window.location.search).has('code');
             await aw.init();
+            if (isCallback) return;
+
             const token = await aw.storage.getVerificationToken();
 
             if (token) {

@@ -45,7 +45,7 @@
     <script type="module">
         import { AgeWallet } from '../../../../src/index.js';
 
-        const ROOT_URI = window.location.origin + '/';
+        const ROOT_URI = window.location.origin;
 
         const aw = new AgeWallet({
             clientId: import.meta.env.VITE_AW_HEADLESS_ID,
@@ -71,7 +71,9 @@
             window.location.href = auth.url;
         });
 
+        const isCallback = new URLSearchParams(window.location.search).has('code');
         aw.init().then(async () => {
+            if (isCallback) return; // init() is redirecting; let the clean-URL load handle the rest
             const token = await aw.storage.getVerificationToken();
             if (token) {
                 document.getElementById('ui-content').classList.add('visible');
