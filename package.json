@@ -1,6 +1,6 @@
 {
   "name": "@agewallet/js-sdk",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "type": "module",
   "main": "./dist/agewallet.umd.cjs",
   "module": "./dist/agewallet.js",
